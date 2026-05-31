@@ -1,0 +1,7 @@
+user_id,age_group,country,preferred_category,created_at
+user_001,25-34,United States,electronics,2026-01-20T08:00:00Z
+user_002,35-44,Canada,home,2026-01-20T08:15:00Z
+user_003,18-24,United Kingdom,fashion,2026-01-20T08:30:00Z
+user_004,25-34,Australia,sports,2026-01-20T08:45:00Z
+user_005,45-54,Singapore,books,2026-01-20T09:00:00Z
+user_006,35-44,New Zealand,beauty,2026-01-20T09:15:00Z
