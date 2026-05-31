@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.egg-info/
 .venv/
 venv/
 env/
@@ -22,7 +23,7 @@ data/processed/*
 !data/processed/.gitkeep
 
 # Models and artifacts
-models/
+/models/
 artifacts/
 mlruns/
 
