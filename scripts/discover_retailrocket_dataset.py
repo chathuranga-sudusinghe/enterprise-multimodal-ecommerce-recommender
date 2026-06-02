@@ -10,9 +10,10 @@ from pathlib import Path
 import pandas as pd
 
 LOGGER = logging.getLogger(__name__)
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CHUNK_SIZE = 100_000
-RAW_DATA_DIR = Path("data/raw/RetailRocket_event-based")
-REPORT_PATH = Path("docs/reports/retailrocket_dataset_discovery.md")
+RAW_DATA_DIR = PROJECT_ROOT / "data/raw/RetailRocket_event-based"
+REPORT_PATH = PROJECT_ROOT / "docs/reports/retailrocket_dataset_discovery.md"
 CSV_FILES = ("events.csv", "item_properties_part1.csv", "item_properties_part2.csv", "category_tree.csv")
 
 
