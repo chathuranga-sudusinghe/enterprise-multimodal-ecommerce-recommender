@@ -1,197 +1,155 @@
-# Enterprise Multimodal E-Commerce Recommendation AI System: System Scope
+# System Scope
 
-## 1. Purpose of This Document
+## 1. Purpose
 
-This document defines the scope, boundaries, and acceptance expectations for Version 1 of the Enterprise Multimodal E-Commerce Recommendation AI System. It is intended to align product, engineering, data science, security, and stakeholder expectations before implementation expands beyond the foundation stage.
+This document defines the current and future boundaries of the Enterprise Multimodal E-Commerce Recommendation AI System. It aligns development with the confirmed two-track real-data strategy and prevents premature implementation claims.
 
-The document clarifies what will be built now, what will be deferred, and how future flagship capabilities such as multimodal retrieval, RAG, agentic workflows, MCP integration, and feedback optimization should be treated until the baseline system is stable.
+## 2. Current Project Scope
 
-## 2. Version 1 Scope
+The current phase is discovery-first and baseline-evidence-first. It covers documentation restructuring, deterministic fixture contracts, safe adapters, validation planning, and separate evaluation protocol design.
 
-Version 1 focuses on a clean, modular, production-oriented recommendation foundation. The system should demonstrate the core flow from approved sample data to baseline recommendations, API serving, and basic evaluation.
+The system currently targets:
 
-Version 1 includes:
+- Behavior-based recommendation from RetailRocket events.
+- Product text-based similarity from Amazon Berkeley Objects (ABO) listings.
+- Product image-based similarity from ABO catalog images in a later controlled step.
 
-- A well-structured Python project suitable for enterprise AI/ML development.
-- Professional project documentation and system scope documentation.
-- Synthetic sample datasets for products, users, and user behavior events.
-- Product, user, and event schema definitions.
-- Baseline recommendation logic, starting with simple popularity, category, or content-based approaches.
-- Basic offline recommendation evaluation metrics.
-- A FastAPI service skeleton with health and recommendation endpoints.
-- Pydantic request and response schemas for API boundaries.
-- Unit, integration, and API test foundations for important logic.
-- Docker-ready local development structure.
-- Configuration examples through non-secret files such as `.env.example` and YAML config files.
+Video recommendation is excluded from the current scope.
 
-## 3. Out of Scope for Version 1
+## 3. Track A: RetailRocket Behavior/Event Recommendation
 
-The following capabilities are intentionally excluded from Version 1 to keep the foundation focused and reviewable:
+RetailRocket data is stored under `data/raw/RetailRocket_event-based/`.
 
-- Full product image model training or deep multimodal model training.
-- LLM fine-tuning or generative shopping assistant workflows.
-- RAG implementation for business policy grounding.
-- LangGraph or other agentic workflow orchestration.
-- MCP server, MCP client, or external enterprise tool integration.
-- Contextual bandit optimization or online learning.
-- Kubernetes, cloud deployment, or production infrastructure automation.
-- Large-scale distributed data pipelines.
-- Full real-time personalization for anonymous users.
-- Advanced fraud, abuse, identity resolution, or sensitive user profiling features.
+| Raw File | Role |
+| --- | --- |
+| `events.csv` | Visitor-item behavior events |
+| `item_properties_part1.csv` | Timestamped item-property records |
+| `item_properties_part2.csv` | Timestamped item-property records |
+| `category_tree.csv` | Category hierarchy |
 
-## 4. Future Flagship Scope
+The initial baseline candidate is an event-weighted recent popularity recommender. Its exact event weights, recency policy, split protocol, and metrics require approval before implementation.
 
-Future releases may evolve the system into a flagship enterprise personalization platform. These capabilities should be planned as extensions, not Version 1 commitments.
+## 4. Track B: Amazon ABO Text/Image Product Similarity
 
-Future scope may include:
+ABO data is stored under `data/raw/amazon_berkeley_text_images-based/`.
 
-- Multimodal product representation using product text, images, metadata, and reviews.
-- Vector search for semantic retrieval and product similarity.
-- RAG-based business rule grounding for stock, campaigns, pricing, governance, and policy checks.
-- Controlled agentic workflows for candidate retrieval, inventory checks, ranking, explanations, and fallback decisions.
-- MCP-enabled access to approved enterprise tools such as catalog, inventory, pricing, campaign, and audit systems.
-- Contextual bandit feedback optimization using clicks, add-to-cart events, purchases, negative feedback, and returns.
-- Explainable recommendation outputs for customers, merchandisers, and governance reviewers.
-- Advanced monitoring, experiment tracking, online experimentation, and model governance workflows.
+| Raw File | Role |
+| --- | --- |
+| `abo-listings.tar` | Multilingual listing metadata |
+| `abo-images-small.tar` | Small catalog images and image metadata |
+| `README.md` | Dataset description and license notes |
 
-## 5. Core System Modules
+The first baseline candidate is metadata/text-based product similarity. Image-similarity work follows later as a separately evaluated extension.
 
-Version 1 should be organized around clear, testable modules with minimal coupling:
+## 5. In-Scope Items
 
-- Data ingestion: Load product, user, and event datasets from approved local sample sources.
-- Data validation: Check required fields, allowed event types, missing values, and basic schema consistency.
-- Feature preparation: Create simple product, user, and event features needed by baseline recommenders.
-- Baseline recommender: Generate ranked product recommendations using simple, explainable logic.
-- Evaluation: Measure recommendation quality with offline metrics and baseline comparisons.
-- API service: Serve health checks and recommendation requests through FastAPI.
-- Schemas: Define request, response, and data contracts using Pydantic where appropriate.
-- Configuration: Manage non-secret application, data, and model settings through config files and environment variables.
-- Logging and monitoring foundations: Provide structured logs and basic operational visibility.
-- Tests: Cover critical data, model, evaluation, and API behavior.
+- Safe inspection of raw files and archives.
+- Documentation based on discovery evidence.
+- Tiny deterministic fixtures for tests, examples, and CI.
+- Track-specific canonical schemas.
+- Safe raw-data adapters and validation.
+- Separate baseline planning.
+- Separate evaluation protocols.
+- Local-first engineering workflows.
 
-## 6. Data Scope
+## 6. Out-of-Scope Items
 
-Version 1 uses a small synthetic dataset designed for local development, testing, and demonstration. The data should be realistic enough to support recommendation logic without introducing sensitive information.
+The current phase excludes:
 
-Core Version 1 datasets:
+- Merging RetailRocket and ABO.
+- Invented shared IDs or synthetic cross-track joins.
+- The old synthetic `products.csv`, `users.csv`, and `events.csv` design as the primary dataset.
+- Video, spin, 360-degree, or 3D recommendation.
+- API implementation.
+- Model training before protocol approval.
+- Hardcoded RetailRocket event weights before protocol approval.
+- RAG implementation.
+- Agentic workflows.
+- MCP integration.
+- Contextual bandits.
+- Cloud deployment and Kubernetes.
 
-- `products.csv`: Product identifiers, names, categories, brands, prices, descriptions, image references, stock status, and ratings.
-- `users.csv`: User identifiers, age groups, countries, and preferred categories.
-- `events.csv`: Event identifiers, user identifiers, product identifiers, event types, and timestamps.
+## 7. Future Extension Scope
 
-Allowed Version 1 event types:
+Potential future extensions may include:
 
-- `view`
-- `click`
-- `add_to_cart`
-- `purchase`
-- `not_interested`
+- Personalized RetailRocket methods beyond popularity baselines.
+- ABO image similarity and text-image retrieval.
+- Track-specific vector search.
+- An API service layer after baseline evidence exists.
+- Monitoring, experiment tracking, and deployment automation.
+- Governed RAG, agentic, or MCP layers only when a concrete business requirement justifies them.
 
-The system must avoid sensitive personal data, secrets, credentials, and unapproved external datasets. Future data sources such as reviews, search queries, product images, policy documents, inventory feeds, pricing data, and campaign rules should be added only after the baseline system is stable.
+Future extensions must preserve provenance and must not fabricate identity mappings between datasets.
 
-## 7. Model Scope
+## 8. Core System Modules
 
-Version 1 should use baseline recommendation methods before introducing advanced models. The goal is to create a dependable reference system that can be evaluated, tested, and improved.
+| Module | Current Direction |
+| --- | --- |
+| Discovery | Read-only schema, inventory, and bounded profiling tools |
+| Fixture contracts | Tiny deterministic track-specific examples |
+| Data adapters | Safe RetailRocket CSV and ABO archive readers |
+| Validation | Track-specific schema and relationship checks |
+| Feature preparation | Defined only after protocol approval |
+| Baselines | Separate RetailRocket and ABO implementations later |
+| Evaluation | Separate leakage-aware protocols and reports |
+| API service | Future layer after baseline evidence |
+| Monitoring and governance | Incremental controls as the system matures |
 
-In-scope Version 1 model approaches:
+## 9. Data Scope
 
-- Popularity-based recommendations.
-- Category-based recommendations using user or product category signals.
-- Simple content-based recommendations using product metadata.
-- Rule-aware filtering for basic eligibility such as stock status, if available.
+Raw datasets are local, ignored by Git, and accessed safely. `data/sample/` is reserved for tiny deterministic fixtures only. Fixtures must mirror discovered schemas and must not be described as the primary ML dataset.
 
-Out of scope for Version 1 model development:
+RetailRocket identifiers belong only to RetailRocket. ABO listing and image identifiers belong only to ABO. No cross-dataset join is permitted.
 
-- Deep learning recommender training.
-- Neural collaborative filtering.
-- Two-tower retrieval models.
-- Sequential recommendation models.
-- Text embedding and image embedding similarity systems.
-- Multimodal ranking models.
+## 10. Model Scope
 
-Future model work should build on the baseline metrics and interfaces established in Version 1.
+No new model implementation should start during documentation restructuring. After approval:
 
-## 8. API Scope
+- RetailRocket may begin with event-weighted recent popularity.
+- ABO may begin with metadata/text product similarity.
+- ABO image similarity may follow as a controlled extension.
 
-Version 1 uses FastAPI to expose internal service endpoints for local development and integration testing.
+Advanced methods must outperform the corresponding baseline under the same task and protocol before improvement is claimed.
 
-Initial API endpoints:
+## 11. API Scope Later
 
-- `GET /health`: Return service health and basic readiness information.
-- `POST /api/v1/recommend`: Return ranked product recommendations for a user, product, category, or request context.
+An Application Programming Interface (API) is a later service boundary. API work must wait until stable adapters, validation, baseline evidence, and response contracts exist. No current document should claim that serving endpoints are implemented.
 
-Future API endpoints may include:
+## 12. Evaluation Scope
 
-- `POST /api/v1/feedback` for collecting recommendation feedback.
-- `GET /metrics` for operational metrics.
+Each track requires its own evaluation protocol:
 
-API implementation should use modular routes, Pydantic schemas, a service layer, configuration management, and logging. Version 1 APIs are intended for internal use and should not be treated as a public developer platform.
+- RetailRocket: temporal behavior-based top-K recommendation.
+- ABO: product-to-product similarity retrieval.
 
-## 9. Evaluation Scope
+Cross-track aggregate scores are not valid because the datasets and tasks are unrelated.
 
-Version 1 evaluation should establish the first measurable quality baseline for recommendations. Metrics may be implemented incrementally, starting with the simplest reliable options supported by the sample data.
+## 13. Security and Governance Scope
 
-Recommended evaluation metrics:
+- Keep raw datasets out of Git.
+- Preserve provenance, attribution, and license notes.
+- Avoid sensitive logging.
+- Do not commit secrets or `.env` files.
+- Use bounded raw-data reads.
+- Document limitations and future governance gates.
 
-- Precision@K
-- Recall@K
-- MAP@K
-- NDCG@K
-- Hit Rate
-- MRR
-- Coverage
-- Diversity
-- Latency
+## 14. Development Boundaries
 
-Version 1 should include offline evaluation and baseline comparison. Future RAG evaluation may include context relevance, groundedness, citation accuracy, hallucination rate, and fallback quality. Future agent evaluation may include task success rate, tool-use accuracy, retry rate, failure rate, latency, and trace quality.
+- Work in small, reviewable changes.
+- Rebuild fixture contracts before adapters and tests.
+- Approve evaluation protocols before baselines.
+- Require baseline evidence before API implementation.
+- Add deployment complexity only after local workflows are stable.
 
-## 10. Security and Governance Scope
+## 15. Acceptance Criteria
 
-Version 1 must follow basic enterprise security and AI governance principles even while using synthetic data.
+This scope is accepted when:
 
-Security and governance requirements:
-
-- Do not commit secrets, API keys, tokens, credentials, or local `.env` files.
-- Keep `.env.example` limited to safe configuration examples.
-- Avoid sensitive personal data in all sample datasets.
-- Validate API inputs and data schemas.
-- Do not log sensitive data.
-- Document data assumptions, model limitations, and known failure modes.
-- Track configuration, model behavior, and evaluation results clearly enough for review.
-- Design future access to enterprise systems around least-privilege principles.
-
-The system should remain transparent, explainable, and auditable enough for portfolio review and future enterprise governance expansion.
-
-## 11. Development Boundaries
-
-Development should proceed in small, focused, reviewable steps. Version 1 work should strengthen the foundation instead of adding premature advanced architecture.
-
-Development boundaries:
-
-- Do not restructure major folders without explicit approval.
-- Do not modify unrelated files during focused tasks.
-- Do not introduce unnecessary dependencies.
-- Use `pathlib.Path` for filesystem paths.
-- Use logging instead of unnecessary `print()` statements.
-- Use Pydantic for API and schema boundaries where appropriate.
-- Keep code compatible with WSL2 Ubuntu and VS Code workflows.
-- Keep configuration environment-aware and avoid hardcoded user-specific paths.
-- Add tests for important recommendation, evaluation, validation, and API behavior.
-- Keep future RAG, agents, MCP, bandits, Kubernetes, and cloud deployment as documented roadmap items until the baseline is stable.
-
-## 12. Acceptance Criteria
-
-Version 1 scope is satisfied when the foundation can be reviewed as a coherent enterprise AI/ML project.
-
-Acceptance criteria:
-
-- Repository structure matches the planned modular project layout.
-- Documentation clearly explains the project foundation, system scope, architecture, data design, evaluation plan, security governance, and deployment plan.
-- Synthetic product, user, and event datasets are defined and usable for local development.
-- Baseline recommendation logic can generate ranked product recommendations.
-- Basic evaluation metrics can be run against the baseline recommender.
-- FastAPI exposes a working health endpoint and recommendation endpoint.
-- Pydantic schemas define API request and response contracts.
-- Unit, integration, and API test foundations are present for critical behavior.
-- Docker-ready files and configuration examples exist without exposing secrets.
-- Out-of-scope advanced capabilities are documented as future work, not partially implemented prematurely.
+1. The two independent dataset tracks are clearly defined.
+2. Cross-dataset joins and false shared-ID assumptions are prohibited.
+3. `data/sample/` is described as fixture-only.
+4. Video and premature advanced features are excluded from the current phase.
+5. Baseline and API gates are explicit.
+6. Evaluation is defined separately for RetailRocket and ABO.
+7. Raw-data safety, provenance, and governance expectations are visible.

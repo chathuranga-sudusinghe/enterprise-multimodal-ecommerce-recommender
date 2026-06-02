@@ -1,453 +1,176 @@
-# 03 Architecture
+# Architecture
 
-## 1. Purpose of This Document
+## 1. Purpose
 
-This document explains the architecture of the Enterprise Multimodal E-Commerce Recommendation AI System. It defines a clear, modular, and production-oriented architecture that can start small in Version 1 and gradually grow into a flagship enterprise AI recommendation platform.
+This document defines the architecture direction for the Enterprise Multimodal E-Commerce Recommendation AI System. The current architecture is local-first, discovery-first, and deliberately split into two independent dataset tracks.
 
-Version 1 focuses on a simple but well-structured recommendation system using synthetic e-commerce data, baseline recommendation logic, FastAPI serving, basic evaluation, logging, and testable modules.
-
-Future phases may extend the system with multimodal AI, vector search, Retrieval-Augmented Generation (RAG), agentic workflow orchestration, Model Context Protocol (MCP) tool access, feedback-based ranking optimization, monitoring, and deployment readiness. These future capabilities are not part of Version 1.
+No model or Application Programming Interface (API) implementation is claimed as complete in this document. Baseline implementation remains gated by approved data contracts and evaluation protocols.
 
 ## 2. Architecture Principles
 
-The system follows these architecture principles:
+- Preserve dataset provenance and separation.
+- Use bounded raw-data access patterns.
+- Design canonical schemas before model code.
+- Evaluate each track independently.
+- Start with simple baselines before advanced models.
+- Keep fixtures, raw data, processed data, model artifacts, and services separate.
+- Add API and deployment layers only after baseline evidence exists.
 
-1. Start simple before adding advanced AI.
-2. Build a real AI product, not a notebook-only demo.
-3. Keep each module focused, replaceable, and testable.
-4. Separate data logic, feature logic, model logic, API logic, evaluation, and monitoring.
-5. Establish baseline recommenders before adding advanced models.
-6. Prefer clear interfaces over tightly coupled implementation details.
-7. Keep the system local-first while leaving a path to cloud-ready deployment.
-8. Avoid hardcoded local paths and user-specific configuration.
-9. Use configuration files and environment variables where appropriate.
-10. Treat RAG, agentic AI, MCP, contextual bandits, Kubernetes, and deep learning as future extensions, not Version 1 requirements.
-
-## 3. Version 1 Architecture Overview
-
-Version 1 uses a lightweight modular pipeline:
+## 3. Two-Track Architecture Overview
 
 ```text
-Synthetic E-Commerce Data
-        ->
-Data Validation
-        ->
-Feature Preparation
-        ->
-Baseline Recommender
-        ->
-FastAPI Service
-        ->
-Evaluation + Logging
+Track A: RetailRocket Behavior Recommendation
+Raw RetailRocket CSVs
+  -> Safe ingestion
+  -> Canonical interaction schema
+  -> Temporal split
+  -> Event-weighted recent popularity baseline
+  -> RetailRocket evaluation
+
+Track B: Amazon ABO Text/Image Similarity
+ABO listings and image archives
+  -> Safe archive inspection and controlled extraction planning
+  -> Canonical product schema
+  -> Product-to-image mapping
+  -> Text metadata similarity baseline
+  -> Later image similarity baseline
+  -> ABO evaluation
 ```
 
-Version 1 is intentionally simple. Its purpose is to create a stable foundation that can be evaluated, tested, documented, and extended without requiring premature infrastructure or advanced AI components.
+The tracks remain independent. Their outputs may be presented as separate capabilities later, but their identifiers must not be joined or treated as shared.
 
-## 4. Version 1 Architecture Layers
+## 4. Track A: RetailRocket Pipeline
 
-### 4.1 Data Source Layer
+### 4.1 Raw Inputs
 
-Version 1 uses small synthetic e-commerce datasets for local development, testing, and demonstration.
+RetailRocket raw CSV files are stored under `data/raw/RetailRocket_event-based/`:
 
-Initial datasets:
-
-- `products.csv`
-- `users.csv`
 - `events.csv`
+- `item_properties_part1.csv`
+- `item_properties_part2.csv`
+- `category_tree.csv`
 
-The data should be stored under the project `data/` directory using a clean structure:
+### 4.2 Safe Ingestion
 
-```text
-data/
-|-- raw/
-|-- interim/
-|-- processed/
-`-- sample/
-```
+Large CSV files must use header-only reads, streaming line counts, or chunked processing. Full-file DataFrame loads are not appropriate for raw RetailRocket files.
 
-The synthetic data should avoid sensitive personal information and should be realistic enough to support baseline recommendation behavior.
+### 4.3 Canonical Interaction Schema
 
-### 4.2 Data Validation Layer
-
-The data validation layer checks whether input data is usable before feature preparation and recommendation logic.
-
-Validation responsibilities include:
-
-- Required column checks.
-- Missing value checks.
-- Duplicate record checks.
-- Invalid category checks.
-- Invalid event type checks.
-- Basic price and rating checks.
-- Simple schema validation.
-
-Version 1 can start with lightweight validation using Python functions and Pydantic where schema objects are useful. Future versions may add validation frameworks such as Pandera or Great Expectations if the project scale requires them.
-
-### 4.3 Feature Preparation Layer
-
-The feature preparation layer transforms raw e-commerce data into simple features that baseline recommenders can use.
-
-Version 1 feature preparation may include:
-
-- Product popularity scores.
-- User preferred category mappings.
-- Product category mappings.
-- Event-based interaction scores.
-- Basic product metadata features.
-
-Example event weights:
-
-| Event Type | Score |
-| --- | ---: |
-| `view` | 1 |
-| `click` | 2 |
-| `add_to_cart` | 4 |
-| `purchase` | 6 |
-| `not_interested` | -3 |
-
-These weights are baseline assumptions and can be adjusted later during evaluation.
-
-### 4.4 Baseline Recommendation Layer
-
-Version 1 should include baseline recommendation logic before any advanced model is added.
-
-Initial baseline recommenders may include:
-
-1. Popularity-based recommender.
-2. Category-based recommender.
-3. Simple content-based recommender using product metadata.
-
-The purpose of this layer is to create a measurable starting point. Future models should demonstrate improvement against these baselines before becoming part of the main system.
-
-### 4.5 API Service Layer
-
-FastAPI is used as the Version 1 service layer.
-
-Initial API endpoints:
+A future adapter should map discovered event rows into a documented interaction contract while preserving source fields and provenance. Core discovered source fields are:
 
 ```text
-GET  /health
-POST /api/v1/recommend
+timestamp, visitorid, event, itemid, transactionid
 ```
 
-Future endpoints may include:
+Observed events are `view`, `addtocart`, and `transaction`.
+
+### 4.4 Temporal Split
+
+Behavior evaluation requires temporal train, validation, and test boundaries. Split logic must prevent future interactions from leaking into earlier recommendation decisions.
+
+### 4.5 Baseline Direction
+
+The first candidate is an event-weighted recent popularity recommender. Exact weights, recency windows, and fallback behavior remain provisional until the RetailRocket evaluation protocol is approved.
+
+## 5. Track B: Amazon ABO Pipeline
+
+### 5.1 Raw Inputs
+
+ABO raw files are stored under `data/raw/amazon_berkeley_text_images-based/`:
+
+- `abo-listings.tar`
+- `abo-images-small.tar`
+- `README.md`
+
+### 5.2 Safe Archive Inspection and Extraction Planning
+
+Archive processing must use bounded `tarfile` inspection or explicitly approved controlled extraction. The project must not extract all images or process all image content during discovery work.
+
+### 5.3 Canonical Product Schema
+
+A future ABO adapter should normalize approved listing fields such as:
 
 ```text
-POST /api/v1/feedback
-POST /api/v1/recommend/explain
-POST /api/v1/rag/policy-check
-POST /api/v1/agent/recommend
-GET  /metrics
+item_id, item_name, brand, bullet_point, product_type,
+color, material, style, main_image_id, other_image_id
 ```
 
-The API layer should use:
+Field availability can vary by listing and locale, so canonicalization must define optional fields deliberately.
 
-- FastAPI routes.
-- Pydantic request and response schemas.
-- Service functions or service classes.
-- Structured error handling.
-- Configuration-driven behavior.
-- Logging for operational visibility.
+### 5.4 Product-to-Image Mapping
 
-### 4.6 Evaluation Layer
-
-The evaluation layer measures recommendation quality and helps prove whether future improvements are meaningful.
-
-Version 1 can start with simple offline metrics:
-
-- Precision@K.
-- Recall@K.
-- Hit Rate.
-- Coverage.
-- Latency.
-
-Future versions may add:
-
-- MAP@K.
-- NDCG@K.
-- MRR.
-- Diversity.
-- Novelty.
-- Fairness checks.
-- Offline A/B-style comparisons.
-
-Evaluation is required because the project should show measurable recommendation quality, not only working API behavior.
-
-### 4.7 Logging and Monitoring Preparation Layer
-
-Version 1 should include basic structured logging.
-
-Logging should capture:
-
-- API request flow.
-- Recommendation request received.
-- Recommender type used.
-- Number of recommended products.
-- Errors and fallback behavior.
-
-Version 1 does not require Prometheus, Grafana, or full observability infrastructure. The code should still be organized so operational metrics can be added later.
-
-Future monitoring may include:
-
-- API latency.
-- Request count.
-- Recommendation latency.
-- Model or recommender error rate.
-- Fallback trigger count.
-- Feedback event volume.
-- Recommendation quality drift.
-
-## 5. Suggested Version 1 Module Structure
-
-The source code should follow a clean package structure:
+ABO listing image IDs may map to image metadata fields:
 
 ```text
-src/
-`-- ecommerce_recommender/
-    |-- __init__.py
-    |-- api/
-    |   |-- routes.py
-    |   `-- schemas.py
-    |-- core/
-    |   `-- config.py
-    |-- data/
-    |   |-- loading.py
-    |   `-- validation.py
-    |-- features/
-    |   `-- build_features.py
-    |-- models/
-    |   |-- base.py
-    |   |-- popularity.py
-    |   |-- category.py
-    |   `-- content_based.py
-    |-- evaluation/
-    |   `-- metrics.py
-    |-- monitoring/
-    |   `-- logging_config.py
-    `-- utils/
-        `-- paths.py
+image_id, path, height, width
 ```
 
-This structure keeps the system modular and easy to extend. It also separates the concerns that should evolve independently: data access, validation, feature preparation, model behavior, API serving, evaluation, monitoring, and utility functions.
+This mapping belongs only to ABO. It must never be used as a bridge to RetailRocket items.
 
-## 6. Future Flagship Architecture
+### 5.5 Baseline Direction
 
-The future flagship architecture expands Version 1 into a broader enterprise AI personalization platform.
+The initial candidate is text metadata similarity. Image similarity is a later controlled baseline or extension after the metadata path is evaluated.
+
+## 6. No Dataset Merge Rule
 
 ```text
-Data Sources
-        ->
-Data Validation and Governance
-        ->
-Feature Engineering
-        ->
-Baseline + ML Recommendation Models
-        ->
-Multimodal Embedding Layer
-        ->
-Vector Search Layer
-        ->
-RAG Business Rule Grounding
-        ->
-Agentic Workflow Orchestration
-        ->
-Ranking and Feedback Optimization
-        ->
-FastAPI Service Layer
-        ->
-Monitoring, Evaluation, Security, and Deployment
+RetailRocket visitorid/itemid  -X-  ABO item_id/image_id
 ```
 
-These layers should be introduced only after the baseline system is stable, tested, and documented.
+The datasets represent separate sources with unrelated identifiers. The architecture prohibits fabricated joins, shared customer assumptions, and claims that both datasets originate from one company or catalog.
 
-## 7. Future Architecture Layers
+## 7. Fixture and Validation Architecture
 
-### 7.1 Multimodal AI Layer
+```text
+Discovered raw schema
+  -> Approved canonical contract
+  -> Tiny deterministic fixture
+  -> Track-specific validator
+  -> Adapter tests and CI checks
+```
 
-The multimodal layer will use product text and product images to improve recommendation quality.
+`data/sample/` should eventually contain separate RetailRocket and ABO fixture folders. Fixtures are test assets, not training datasets.
 
-Possible future components:
+## 8. Future API and Service Layer Concept
 
-- Product title embeddings.
-- Product description embeddings.
-- Review embeddings.
-- Product image embeddings.
-- Visual similarity search.
-- Text similarity search.
-- Multimodal product ranking.
+After adapters, validation, baselines, and evaluation evidence are stable, an API layer may expose separate capabilities such as:
 
-This layer is especially useful for cold-start products and visually driven e-commerce categories.
+- Behavior-based top-K recommendation.
+- Text-based similar-product retrieval.
+- Image-based similar-product retrieval.
+- Health and observability endpoints.
 
-### 7.2 Vector Search Layer
+The API must keep dataset provenance explicit and must not imply unsupported cross-track personalization.
 
-The vector search layer will support semantic product retrieval and similarity search.
+## 9. Future Multimodal Extension Path
 
-Possible tools:
+The ABO track may progress from metadata similarity to image similarity and then to evaluated text-image retrieval or multimodal ranking. Any added method must be compared with the corresponding ABO baseline under the same protocol.
 
-- FAISS for local vector search.
-- Pinecone for cloud-ready vector search later.
+## 10. Future Enterprise Architecture Path
 
-Use cases:
+```text
+Track-specific raw sources
+  -> Safe ingestion and validation
+  -> Provenance-aware processed artifacts
+  -> Approved baselines and advanced models
+  -> Track-specific retrieval or ranking services
+  -> API gateway and observability
+  -> Governed business extensions when justified
+```
 
-- Similar product search.
-- Product-to-product recommendation.
-- Search query understanding.
-- Retrieval for RAG policy grounding.
+Possible later extensions include vector search, monitoring, experiment tracking, governed Retrieval-Augmented Generation (RAG), controlled agent workflows, and Model Context Protocol (MCP) tools. These are not current-phase requirements.
 
-### 7.3 RAG Business Grounding Layer
+## 11. Local-First Direction
 
-Retrieval-Augmented Generation may be used later to ground recommendations in business rules and policy documents.
+Current work should run locally with WSL2, Visual Studio Code, Git, Python, and pytest. Docker, cloud deployment, and Kubernetes remain later maturity steps after adapters, tests, and baseline evidence are stable.
 
-Possible RAG documents:
+## 12. Architecture Acceptance Criteria
 
-- Stock rules.
-- Pricing rules.
-- Campaign rules.
-- Return and refund policies.
-- Blocked product rules.
-- Customer segment rules.
-- Recommendation governance rules.
+The architecture is accepted when it:
 
-The RAG layer should help prevent unsafe, unavailable, or business-invalid recommendations. It is not required for Version 1.
-
-### 7.4 Agentic Workflow Layer
-
-The agentic workflow layer may coordinate controlled recommendation decision steps in future versions.
-
-Possible agents:
-
-- Recommendation Agent.
-- Candidate Retrieval Agent.
-- Inventory Check Agent.
-- Policy/RAG Agent.
-- Ranking Agent.
-- Explanation Agent.
-- Fallback Agent.
-- Evaluation Agent.
-
-The agentic layer should not behave like an uncontrolled chatbot. It should follow a structured workflow with clear tool access, retry limits, fallback behavior, and audit logging.
-
-### 7.5 MCP Tool Access Layer
-
-The Model Context Protocol layer may provide controlled access to enterprise-style tools and data.
-
-Possible MCP tools:
-
-- Catalog lookup.
-- Inventory lookup.
-- Pricing lookup.
-- Campaign lookup.
-- Policy lookup.
-- Customer segment lookup.
-- Recommendation audit log.
-
-This layer would allow the system to act like an enterprise AI application connected to governed tools, not just a standalone model script.
-
-### 7.6 Feedback Optimization Layer
-
-Future versions may use contextual bandit-style optimization to improve ranking based on user feedback.
-
-Example reward design:
-
-| User Action | Reward |
-| --- | ---: |
-| `impression_only` | 0.0 |
-| `click` | 0.2 |
-| `add_to_cart` | 0.6 |
-| `purchase` | 1.0 |
-| `not_interested` | -0.7 |
-| `return_refund` | -0.5 |
-
-This should be framed as feedback-based ranking optimization, not full large-scale reinforcement learning in the early stages.
-
-## 8. Deployment Architecture Direction
-
-Version 1 should be local-first and simple to run in a developer environment.
-
-Initial local stack:
-
-- Python.
-- FastAPI.
-- pytest.
-- Docker later.
-- GitHub Actions later.
-
-Future local enterprise stack may include:
-
-- FastAPI.
-- PostgreSQL.
-- Kafka.
-- Airflow.
-- MinIO.
-- FAISS.
-- MLflow.
-- Prometheus.
-- Grafana.
-- Docker Compose.
-
-Future cloud-ready direction may include:
-
-- AWS or Azure.
-- Managed PostgreSQL.
-- Object storage.
-- Container deployment.
-- Pinecone.
-- CI/CD pipeline.
-- Monitoring dashboards.
-
-Kubernetes should only be considered after the Docker Compose version is stable and there is a real deployment need.
-
-## 9. Security and Governance Architecture
-
-The architecture should support security and governance from the beginning.
-
-Version 1 security and governance practices:
-
-- No secrets in code.
-- `.env` ignored by Git.
-- `.env.example` used for safe configuration examples.
-- Input validation through Pydantic where appropriate.
-- No sensitive personal data in synthetic datasets.
-- Clear documentation of assumptions and limitations.
-
-Future security and governance practices may include:
-
-- Protected admin endpoints.
-- Audit logs.
-- Restricted MCP tool access.
-- Recommendation policy checks.
-- Fairness and bias analysis.
-- Human review for risky outputs.
-- Fallback behavior for uncertain recommendations.
-- No sensitive data in logs.
-
-## 10. Architecture Acceptance Criteria
-
-This architecture document is complete when it clearly explains:
-
-1. The Version 1 architecture.
-2. The future flagship architecture.
-3. The main system layers.
-4. The data flow from input data to recommendation output.
-5. The role of FastAPI in the system.
-6. The role of baseline recommenders.
-7. The future role of multimodal AI, RAG, agents, MCP, and feedback optimization.
-8. The local-first and cloud-ready deployment direction.
-9. The security and governance direction.
-10. The reason advanced tools are future extensions, not Version 1 requirements.
-
-## 11. Summary
-
-The project architecture starts with a simple, testable, and production-style recommendation system.
-
-Version 1 focuses on:
-
-- Synthetic e-commerce data.
-- Data validation.
-- Feature preparation.
-- Baseline recommendation logic.
-- FastAPI serving.
-- Evaluation.
-- Logging.
-
-Future phases may expand the system into a flagship enterprise AI platform with multimodal recommendation, vector search, RAG business grounding, agentic workflow orchestration, MCP tool access, feedback-based ranking optimization, observability, security, and deployment readiness.
+1. Defines separate RetailRocket and ABO pipelines.
+2. Makes bounded raw-data access explicit.
+3. Prohibits cross-dataset joins.
+4. Separates fixture contracts from raw datasets.
+5. Gates model and API work behind approved protocols and evidence.
+6. Defines a realistic local-first path to later enterprise capabilities.
