@@ -1,150 +1,160 @@
 # AGENTS.md
 
-## 1. Project Overview
+## 1. Project Identity
 
 - Project name: Enterprise Multimodal E-Commerce Recommendation AI System.
-- Purpose: Build a production-oriented e-commerce recommendation platform that starts with baseline recommenders and grows into a future multimodal, RAG-grounded, agentic, MCP-enabled, feedback-optimized personalization system.
-- This is an enterprise AI/ML engineering project, not a toy demo or notebook-only project.
+- This is an enterprise-style AI/ML engineering project, not a toy demo or notebook-only project.
+- The current recommendation scope covers behavior-based recommendation, product text similarity, and product image similarity.
+- Video recommendation is excluded from the current project scope.
+- Build in small, evidence-based phases. Do not add advanced systems before the data contracts, evaluation protocols, and baseline evidence are approved.
 
-## 2. Current Project Stage
+## 2. Current Dataset Strategy
 
-- The project is currently in the foundation stage.
-- Documentation foundation is complete.
-- Next development should move toward repository structure, sample synthetic data, data validation, baseline recommenders, FastAPI skeleton, tests, and evaluation.
-- Advanced AI features must not be implemented before the baseline system is stable.
+The project uses two independent real-world dataset tracks.
 
-## 3. Development Philosophy
+### Track A: RetailRocket Event-Based Recommendation
 
-- Start simple, then improve step by step.
-- Build modular, testable, production-style components.
-- Prefer clear interfaces and readable implementation over premature complexity.
-- Every serious feature must have a clear purpose.
-- Keep work small, focused, and reviewable.
-- Use advanced AI only when it adds clear value.
+- Dataset folder: `data/raw/RetailRocket_event-based/`
+- Purpose: behavior and event-based recommendation.
+- Confirmed raw files:
+  - `events.csv`
+  - `item_properties_part1.csv`
+  - `item_properties_part2.csv`
+  - `category_tree.csv`
+- Confirmed event values include `view`, `addtocart`, and `transaction`.
 
-## 4. Version 1 Scope
+### Track B: Amazon Berkeley Objects Text/Image Similarity
 
-Version 1 includes:
+- Dataset folder: `data/raw/amazon_berkeley_text_images-based/`
+- Purpose: product metadata, text, and image-based product similarity recommendation.
+- Confirmed raw files:
+  - `abo-listings.tar`
+  - `abo-images-small.tar`
+  - `README.md`
+- Confirmed listing metadata includes fields such as `item_id`, `item_name`, `brand`, `bullet_point`, `product_type`, `main_image_id`, and `other_image_id`.
 
-- Synthetic sample data.
-- Data validation.
-- Feature preparation.
-- Baseline recommenders.
-- Simple evaluation metrics.
-- FastAPI local service.
-- API schemas.
-- Basic tests.
-- Safe configuration.
-- Clear documentation.
+## 3. Dataset Separation Rules
 
-## 5. Out of Scope for Version 1
+- Do not merge RetailRocket and Amazon Berkeley Objects (ABO).
+- Do not create cross-dataset joins.
+- Do not pretend both datasets come from the same company, catalog, users, or business system.
+- Do not treat RetailRocket `visitorid` or `itemid` values as ABO `item_id` or `image_id` values.
+- Do not invent mappings between RetailRocket items and ABO listings or images.
+- Evaluate each track separately with a task-appropriate protocol.
+- Any later system-level composition must preserve dataset provenance and explicitly avoid fabricated identity links.
 
-Do not implement these in Version 1:
+## 4. Current Scope
 
-- Real customer data.
-- Real payment data.
-- Production deployment.
-- Cloud deployment.
-- Kubernetes.
+### In Scope
+
+- Safe dataset discovery.
+- Documentation restructuring based on discovery evidence.
+- Tiny deterministic fixtures for tests, examples, and CI.
+- Safe raw-data adapters.
+- Track-specific schema validation.
+- Separate baseline definitions later.
+- Separate evaluation protocols for each track.
+- Behavior, text, and image recommendation only.
+
+### Out of Scope for the Current Phase
+
+- Video recommendation.
 - Full Retrieval-Augmented Generation (RAG) implementation.
-- Large Language Model (LLM) fine-tuning.
-- LangGraph agent workflows.
-- Model Context Protocol (MCP) server/client implementation.
+- Agentic workflows.
+- Model Context Protocol (MCP) server or client implementation.
 - Contextual bandit optimization.
-- Large-scale real-time data pipelines.
+- API implementation.
+- Model training before protocol approval.
+- Hardcoded baseline weights before protocol approval.
+- Cloud deployment.
+- Kubernetes deployment.
+- Synthetic joins across dataset tracks.
 
-## 6. Repository Rules
+## 5. Data Safety Rules
+
+- Do not commit raw datasets.
+- Keep raw dataset files under `data/raw/`, which must remain ignored by Git.
+- Do not load large raw files fully into memory.
+- For RetailRocket large CSV files, use only:
+  - Header-only reads such as `pd.read_csv(path, nrows=0)`.
+  - Streaming line counts.
+  - Chunked reads such as `pd.read_csv(path, chunksize=100_000)`.
+- Do not concatenate RetailRocket chunks into one full DataFrame unless explicitly approved for a proven safe subset.
+- For ABO archives, use bounded `tarfile` inspection or controlled extraction only.
+- Do not extract all ABO images unless explicitly approved.
+- Do not process all images or generate embeddings during discovery work.
+- Do not write generated files into `data/raw/`.
+- Keep dataset provenance, attribution, and license requirements visible in documentation.
+
+## 6. `data/sample/` Rules
+
+- Treat `data/sample/` as tiny deterministic fixtures only.
+- Fixtures exist for unit tests, examples, and CI. They are not the primary ML dataset.
+- Fixture files must mirror discovered real schemas for their corresponding track.
+- Keep RetailRocket fixtures separate from ABO fixtures.
+- The old unified synthetic `products.csv`, `users.csv`, and `events.csv` design is deprecated.
+- Do not invent demographic user profiles, cross-track identifiers, or unsupported fields.
+- Keep fixtures small, readable, deterministic, and safe to commit.
+
+## 7. Documentation Rules
+
+- Rebuild `docs/01_project_foundation.md` through `docs/07_deployment_plan.md` using discovery reports as source evidence.
+- Keep these discovery reports unchanged during normal restructuring:
+  - `docs/reports/retailrocket_dataset_discovery.md`
+  - `docs/reports/abo_dataset_discovery.md`
+  - `docs/reports/dataset_discovery_summary.md`
+  - `docs/reports/full_repository_alignment_audit.md`
+- Avoid synthetic-data-first wording.
+- Clearly distinguish raw datasets, deterministic fixtures, future processed datasets, and future model artifacts.
+- Clearly separate implemented features from planned features.
+- Do not claim that planned models, APIs, deployments, or governance controls already exist.
+- Keep documentation professional, recruiter-readable, and engineer-readable.
+
+## 8. Baseline Rules
+
+- Model coding is paused until documentation and fixture contracts are approved.
+- Do not hardcode event weights before task, split, metrics, recency policy, and validation protocol approval.
+- RetailRocket baseline candidate: event-weighted recent popularity recommender.
+- ABO baseline candidate: content-based product similarity recommender.
+- Define separate business tasks and evaluation protocols for each track.
+- Compare advanced RetailRocket methods against the RetailRocket baseline under the same protocol.
+- Compare advanced ABO methods against the ABO baseline under the same protocol.
+- Do not claim that an advanced method is better unless evaluation proves improvement.
+- API implementation must not start before baseline evidence exists.
+
+## 9. Code Rules
+
+- Use clean, modular Python.
+- Use `pathlib.Path` instead of hardcoded absolute paths.
+- Use logging instead of unnecessary `print()` statements.
+- Use small, focused functions.
+- Add concise docstrings and helpful comments where they improve clarity.
+- Use Pydantic where schema boundaries or API contracts need it.
+- Keep configuration safe and environment-aware.
+- Do not commit secrets, tokens, credentials, `.env` files, or private local paths.
+- Do not add dependencies unless they are necessary for the requested task.
+- Keep WSL2 Ubuntu and VS Code compatibility in mind.
+
+## 10. Testing Rules
+
+- Rebuild tests around the new track-specific fixtures.
+- Maintain separate RetailRocket tests and ABO tests.
+- Replace or quarantine old synthetic tests that depend on deprecated schemas.
+- Add or update tests when code behavior changes.
+- Use pytest for Python tests.
+- Do not claim tests passed unless they were actually run.
+- If tests are not run, state why.
+- Add memory-safety tests or review checks where raw-data adapters could accidentally perform full-file loads.
+
+## 11. Git and Codex Operating Rules
 
 - Work only on the files requested by the user.
 - Do not modify unrelated files.
 - Do not restructure the repository unless explicitly asked.
-- Do not delete existing work unless explicitly asked.
-- Do not add dependencies unless they are necessary for the requested task.
-- Do not add secrets, tokens, API keys, or private credentials.
+- Do not delete existing work unless explicitly asked and confirmed.
 - Keep changes small, focused, and reviewable.
-
-## 7. Coding Standards
-
-- Use clean, modular Python.
-- Use readable names.
-- Use small focused functions.
-- Use `pathlib.Path` instead of hardcoded absolute paths.
-- Use logging instead of unnecessary `print()` statements.
-- Use Pydantic schemas where API or data validation schemas are needed.
-- Use environment variables for configuration and secrets.
-- Add helpful comments and docstrings where they improve clarity.
-- Avoid overengineering.
-
-## 8. Documentation Standards
-
-- Keep documentation professional, recruiter-readable, and engineer-readable.
-- Clearly separate implemented features from future roadmap features.
-- Do not claim that planned systems are already implemented.
-- Use Markdown headings, tables, and concise explanations.
-- Write the full term before abbreviations when useful.
-
-## 9. Data and Privacy Rules
-
-- Use synthetic data only in Version 1.
-- Do not include names, emails, phone numbers, addresses, payment details, or real customer identifiers.
-- Do not log sensitive data.
-- Keep `.env` ignored by Git.
-- Use `.env.example` only for safe placeholder values.
-
-## 10. AI/ML Engineering Rules
-
-- Start with baseline recommenders before advanced models.
-- Do not add deep learning, RAG, agents, MCP, or contextual bandits too early.
-- Future advanced models must be evaluated against baselines.
-- Recommendation logic should be explainable.
-- Evaluation is required before claiming improvement.
-- Use advanced AI only when it adds clear value.
-
-## 11. Testing and Evaluation Rules
-
-- Add or update tests when code behavior changes.
-- Use pytest for Python tests when tests are introduced.
-- Evaluation should include Precision@K, Recall@K, Hit Rate@K, Coverage, Diversity, and Latency when implemented.
-- Do not claim tests passed unless they were actually run.
-- If tests are not run, state why.
-
-## 12. Git Workflow Rules
-
-- `main` is stable and portfolio-ready.
-- `dev` is the development integration branch.
-- `feature/*` branches are used for focused tasks.
-- Do not work directly on `main` unless explicitly asked.
-- Review `git status` and `git diff` before commit.
-- Keep commits small and focused.
+- Review `git status` and `git diff --stat` after edits.
+- Report tests run or explain why tests were not run.
 - Do not commit or push unless explicitly asked.
-
-## 13. Safety Rules for Codex
-
-- Prefer safe edits over risky edits.
-- Ask before making broad or ambiguous changes.
-- Do not run destructive commands.
-- Do not use `git reset --hard`, `git clean -fd`, force push, or file deletion unless explicitly requested and confirmed.
-- Do not expose private keys, tokens, or secrets.
-- Keep WSL2 Ubuntu and VS Code compatibility in mind.
-
-## 14. Expected Response After Changes
-
-After editing files, show:
-
-1. Short summary of changes.
-2. Files changed.
-3. Commands run.
-4. Tests run or not run.
-5. `git status`.
-6. Relevant `git diff`.
-
-## 15. Immediate Next Development Direction
-
-After `AGENTS.md`, the next likely steps are:
-
-1. Create or verify project folder structure.
-2. Create sample synthetic CSV data.
-3. Add data loading and validation modules.
-4. Add baseline recommender logic.
-5. Add FastAPI skeleton.
-6. Add tests and evaluation scripts.
+- Do not run destructive commands such as `git reset --hard`, `git clean -fd`, force push, or file deletion unless explicitly requested and confirmed.
+- Preserve discovery reports as evidence during normal restructuring work.
