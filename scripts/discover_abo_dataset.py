@@ -13,9 +13,10 @@ from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 
 LOGGER = logging.getLogger(__name__)
-RAW_DATA_DIR = Path("data/raw/amazon_berkeley_text_images-based")
-REPORT_PATH = Path("docs/reports/abo_dataset_discovery.md")
-SUMMARY_REPORT_PATH = Path("docs/reports/dataset_discovery_summary.md")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+RAW_DATA_DIR = PROJECT_ROOT / "data/raw/amazon_berkeley_text_images-based"
+REPORT_PATH = PROJECT_ROOT / "docs/reports/abo_dataset_discovery.md"
+SUMMARY_REPORT_PATH = PROJECT_ROOT / "docs/reports/dataset_discovery_summary.md"
 SAMPLE_LIMIT = 10
 LISTING_RECORD_LIMIT = 5
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
