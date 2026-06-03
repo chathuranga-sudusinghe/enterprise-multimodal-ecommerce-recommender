@@ -1,0 +1,53 @@
+{
+  "assumptions": [
+    "This artifact uses a small Amazon Berkeley Objects sample fixture only.",
+    "Recommendations are non-personalized and use product metadata text only.",
+    "RetailRocket behavior data and identifiers are not used."
+  ],
+  "baseline_name": "abo_text_similarity_baseline",
+  "dataset_track": "amazon_berkeley_text_images-based",
+  "generated_at_utc": "2026-06-03T00:00:00Z",
+  "input_sample_path": "data/sample/amazon_berkeley_objects/listings_sample.jsonl",
+  "limitations": [
+    "This does not implement image similarity or multimodal recommendation.",
+    "This does not use user events, API serving, deployment, RAG, agents, MCP, contextual bandits, or advanced models.",
+    "Small sample output is for inspection and repeatability, not production performance claims."
+  ],
+  "method": "Text-only product-to-product similarity using TF-IDF and cosine similarity.",
+  "recommendations": [
+    {
+      "metadata": {
+        "brand": "TableHome",
+        "color": "white",
+        "item_name": "white ceramic salad plate",
+        "material": "ceramic",
+        "product_type": "DINNER_PLATE",
+        "style": "modern"
+      },
+      "product_id": "abo-sample-002",
+      "similarity_score": 0.812345
+    },
+    {
+      "metadata": {
+        "brand": "TableHome",
+        "color": "white",
+        "item_name": "white porcelain serving plate",
+        "material": "porcelain",
+        "product_type": "SERVING_PLATE",
+        "style": "modern"
+      },
+      "product_id": "abo-sample-003",
+      "similarity_score": 0.634211
+    }
+  ],
+  "source_product_id": "abo-sample-001",
+  "source_product_metadata": {
+    "brand": "TableHome",
+    "color": "white",
+    "item_name": "white ceramic dinner plate",
+    "material": "ceramic",
+    "product_type": "DINNER_PLATE",
+    "style": "modern"
+  },
+  "top_k": 2
+}
