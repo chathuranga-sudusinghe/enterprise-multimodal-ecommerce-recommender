@@ -69,6 +69,19 @@ def test_abo_image_paths_match_images_csv() -> None:
     validate_abo_image_paths(fixtures["image_paths"], fixtures["images"])
 
 
+def test_abo_image_path_files_exist_and_are_jpeg_fixtures() -> None:
+    fixture_dir = SAMPLE_DIR / "amazon_berkeley_objects"
+    fixtures = abo_fixtures()
+
+    for image_path in fixtures["image_paths"]:
+        image_file = fixture_dir / image_path
+
+        assert image_file.exists()
+        image_bytes = image_file.read_bytes()
+        assert image_bytes.startswith(b"\xff\xd8")
+        assert image_bytes.endswith(b"\xff\xd9")
+
+
 def test_abo_image_paths_mismatch_fails() -> None:
     fixtures = abo_fixtures()
     image_paths = list(fixtures["image_paths"])

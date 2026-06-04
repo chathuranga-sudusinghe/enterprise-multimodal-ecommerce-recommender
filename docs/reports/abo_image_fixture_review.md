@@ -18,15 +18,16 @@ No full raw Amazon Berkeley Objects archives were loaded, extracted, or processe
 
 ## Fixture Structure Summary
 
-The sample fixture directory currently contains metadata fixtures only:
+The sample fixture directory now contains metadata fixtures and tiny synthetic JPEG image files:
 
 | Fixture | Observed Rows | Purpose |
 | --- | ---: | --- |
 | `listings_sample.jsonl` | 6 listings | Product metadata and product-to-image references |
 | `images_sample.csv` | 10 image metadata rows | Image identifiers, relative paths, and dimensions |
 | `image_paths_sample.txt` | 10 paths | Relative image path references |
+| `images/small/**/*.jpg` | 10 images | Tiny deterministic synthetic JPEG fixtures |
 
-The listed image paths are not backed by actual image files in the sample fixture directory.
+The listed image paths are now backed by actual sample image files in the fixture directory. These images are synthetic placeholders for validation and local baseline plumbing, not real product images.
 
 ## Product/Listings Fields Available
 
@@ -54,7 +55,7 @@ The image metadata fixture includes:
 - `height`
 - `width`
 
-The metadata is sufficient to define a small image index and validate expected image dimensions. It does not provide actual pixel data.
+The metadata is sufficient to define a small image index and validate expected image dimensions. The fixture directory now also contains tiny synthetic JPEG files at the referenced paths.
 
 ## Image Path Format
 
@@ -70,7 +71,7 @@ Examples include:
 - `images/small/b2/b2c3d4e5.jpg`
 - `images/small/f6/f6a7b8ca.jpg`
 
-These paths are useful for validating expected archive-relative layout, but the referenced files are not present under `data/sample/amazon_berkeley_objects/`.
+These paths are useful for validating expected archive-relative layout, and the referenced fixture files now exist under `data/sample/amazon_berkeley_objects/`.
 
 ## Product-to-Image Mapping Observations
 
@@ -85,23 +86,23 @@ Observed mapping coverage:
 - No extra image metadata identifiers were observed outside the listing references.
 - Products may have one or two image references.
 
-This is a coherent metadata mapping fixture for future image baseline logic, but not yet a complete image fixture because image files are missing.
+This is a coherent metadata mapping fixture for future image baseline logic. The referenced paths now resolve to small synthetic JPEG files.
 
 ## Missing or Unavailable Assets
 
-Actual sample image files are not available in the inspected fixture directory.
+Actual sample image files are now available in the inspected fixture directory as tiny deterministic synthetic JPEG placeholders.
 
 The following path checks were observed:
 
 - Total image paths listed: 10
-- Existing image files under `data/sample/amazon_berkeley_objects/`: 0
-- Missing image files: 10
+- Existing image files under `data/sample/amazon_berkeley_objects/`: 10
+- Missing image files: 0
 
-Because no actual images are present, the current fixtures are not sufficient for running real image embedding extraction or image similarity scoring.
+The current sample images are valid fixture files for testing path resolution, file readability, and bounded image-loading behavior. They are not real product images and should not be used to evaluate visual recommendation quality.
 
 ## Readiness for Image Baseline Implementation
 
-The current fixtures are partially ready.
+The current fixtures are ready for a small image-baseline plumbing proof of concept.
 
 Ready:
 
@@ -109,20 +110,21 @@ Ready:
 - Image metadata is available.
 - Product-to-image mappings are internally consistent.
 - Relative image path format is documented by fixture data.
+- Referenced image paths now exist as tiny deterministic JPEG files.
 - Small fixture size is appropriate for deterministic tests.
 
-Not ready:
+Still limited:
 
-- Actual image files are missing.
-- Image embedding extraction cannot be tested against real pixels yet.
-- Visual spot-checking cannot be performed from the current sample directory.
+- The images are synthetic placeholders, not real product images.
+- Visual spot-checking can validate pipeline behavior but not product relevance.
+- Image embedding results from these placeholders should not be interpreted as meaningful product similarity.
 
-The next implementation should either add a tiny set of safe sample image files matching the existing paths or explicitly mock image loading only for non-embedding tests. A real image-only baseline proof of concept needs actual sample images.
+The next implementation can use these fixtures to test image loading, embedding plumbing, cosine similarity, source-product exclusion, deterministic ordering, and small-sample latency without touching the full raw Amazon Berkeley Objects archives.
 
 ## Risks and Limitations
 
-- Metadata-only fixtures can validate mapping logic but not visual similarity quality.
-- Missing sample images may hide image loading, decoding, format, and preprocessing issues.
+- Synthetic fixture images can validate pipeline mechanics but not visual similarity quality.
+- Tiny placeholder images may not expose realistic image loading, decoding, format, or preprocessing issues.
 - Small fixtures are useful for tests but cannot represent full Amazon Berkeley Objects image diversity.
 - Text metadata must not be used as the similarity signal for the image-only baseline.
 - Full raw image archives should not be extracted or processed during initial implementation.
@@ -130,6 +132,6 @@ The next implementation should either add a tiny set of safe sample image files 
 
 ## Recommended Next Step
 
-Add or verify a tiny deterministic set of actual sample image files that match the existing `image_paths_sample.txt` paths, then implement a bounded image-only baseline proof of concept.
+Implement a bounded image-only baseline proof of concept using the existing metadata fixtures and tiny synthetic JPEG files.
 
-The recommended implementation decision is to keep the current metadata fixtures and add minimal real image fixtures before embedding work. This will allow the future baseline to test image loading, feature extraction, cosine similarity, source-product exclusion, deterministic ordering, and small-sample latency without touching the full raw Amazon Berkeley Objects archives.
+The recommended implementation decision is to treat these images as fixture preparation only. They are suitable for local image-loading and baseline mechanics, but real visual quality evaluation should wait for an approved small set of representative product images or a bounded raw-archive extraction plan.
