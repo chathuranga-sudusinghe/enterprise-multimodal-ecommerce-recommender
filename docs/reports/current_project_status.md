@@ -11,7 +11,7 @@ The Enterprise Multimodal E-Commerce Recommendation AI System now follows a two-
 
 The tracks are intentionally independent. RetailRocket `visitorid` and `itemid` values must not be joined to Amazon Berkeley Objects (ABO) listing or image identifiers. The project must not imply that both datasets represent one company, one catalog, or one user population.
 
-Video, spin, 360-degree, and 3D recommendation are outside the current project scope.
+Video, spin, 360-degree, 3D recommendation, API implementation, deployment, Retrieval-Augmented Generation (RAG), agents, Model Context Protocol (MCP), contextual bandits, and advanced models remain outside the current project scope.
 
 ## 2. Completed Work
 
@@ -72,6 +72,17 @@ timestamp, visitorid, event, itemid, transactionid
 
 The weights remain provisional and may be revised after evaluation review.
 
+### 2.7 ABO Text Baseline Protocol, Implementation, and Runner
+
+- Added `docs/reports/abo_text_baseline_protocol.md`.
+- Implemented a text-only Amazon Berkeley Objects product-to-product similarity baseline in `src/ecommerce_recommender/models/abo_text_similarity.py`.
+- Added focused unit tests in `tests/unit/test_abo_text_similarity.py`.
+- Added `scripts/run_abo_text_baseline.py` to run the baseline on small ABO sample fixtures.
+- Added runner tests in `tests/unit/test_run_abo_text_baseline.py`.
+- Added an inspectable sample output artifact in `docs/reports/abo_text_similarity_sample_output.json`.
+
+This baseline uses only approved ABO metadata/text fields. It is not personalized, not behavior-based, not image-based, and not multimodal.
+
 ## 3. Current Data Assets
 
 ### 3.1 Raw Data
@@ -114,6 +125,14 @@ The following generated artifacts currently exist under `data/processed/` and ar
 
 These are reproducible local outputs, not committed source assets.
 
+### 3.4 Committed Report Artifacts
+
+The following small report artifacts are committed for inspection and documentation:
+
+- `docs/reports/retailrocket_baseline_protocol.md`
+- `docs/reports/abo_text_baseline_protocol.md`
+- `docs/reports/abo_text_similarity_sample_output.json`
+
 ## 4. Current Code Status
 
 | Area | Current Status |
@@ -124,7 +143,8 @@ These are reproducible local outputs, not committed source assets.
 | RetailRocket runner | Chunked raw-event aggregation and top-item CSV output implemented |
 | RetailRocket evaluator | Chunked temporal split evaluation and JSON output implemented |
 | Discovery scripts | RetailRocket and ABO discovery scripts implemented with repository-root paths |
-| ABO text baseline | Not implemented yet |
+| ABO text baseline | Text-only product-to-product similarity baseline implemented |
+| ABO text runner | Small fixture-based runner and JSON report artifact implemented |
 | ABO image similarity | Not implemented yet |
 | Application Programming Interface (API) | Not implemented yet |
 | Deployment stack | Not implemented yet |
@@ -134,15 +154,18 @@ Key implementation files:
 - `src/ecommerce_recommender/data/loading.py`
 - `src/ecommerce_recommender/data/validation.py`
 - `src/ecommerce_recommender/models/baseline.py`
+- `src/ecommerce_recommender/models/abo_text_similarity.py`
 - `scripts/run_retailrocket_baseline.py`
 - `scripts/evaluate_retailrocket_baseline.py`
+- `scripts/run_abo_text_baseline.py`
 
 ## 5. Test Status
 
 The latest relevant pytest run completed successfully:
 
 ```text
-17 passed in 2.99s
+python -m pytest -v
+42 passed
 ```
 
 Current unit coverage includes:
@@ -158,8 +181,13 @@ Current unit coverage includes:
 - Chunked train-score and test-relevance aggregation.
 - Visitor-level baseline metrics.
 - Evaluation JSON output creation.
+- ABO text metadata normalization and combined text construction.
+- ABO text product-to-product similarity ranking.
+- ABO source-product exclusion and deterministic tie-breaking.
+- ABO text baseline error handling for unknown products and unfitted recommenders.
+- ABO text runner output creation, metadata fields, source exclusion, deterministic output, and small fixture loading.
 
-The latest evaluator tests use only temporary CSV and output files.
+The latest evaluator and runner tests use only temporary files or small deterministic fixtures. They do not load full raw ABO tar files.
 
 ## 6. RetailRocket Baseline Status
 
@@ -187,14 +215,13 @@ These metric values are acceptable for a first non-personalized popularity basel
 
 ### 7.1 Recommended Near-Term Work
 
-- Define an ABO text-similarity baseline protocol.
-- Implement an ABO metadata/text product-similarity baseline.
-- Add ABO text-similarity unit tests using deterministic fixtures.
-- Define an ABO retrieval evaluation protocol and focused local evaluation path.
+- Review the completed ABO text baseline and sample output artifact.
+- Decide whether to create a small milestone release by merging `dev` into `main`.
+- If continuing feature work first, start the ABO image similarity protocol before implementation.
 
 ### 7.2 Later Work
 
-- Add ABO image similarity after the text baseline is stable.
+- Add ABO image similarity after the text baseline is reviewed and accepted.
 - Compare text, image, and later multimodal ABO methods under the same ABO protocol.
 - Explore stronger RetailRocket methods only after preserving baseline comparability.
 - Add API, monitoring, and deployment work only after stable baseline evidence exists.
@@ -210,9 +237,13 @@ These metric values are acceptable for a first non-personalized popularity basel
 - Keep raw RetailRocket reads chunked and ABO archive inspection bounded.
 - Preserve ABO attribution and license notes in future public-facing documentation.
 - Compare advanced methods only against the corresponding track baseline under the same protocol.
+- Treat the ABO text baseline as product similarity only; do not describe it as personalized recommendation.
+- Do not claim ABO image similarity or multimodal recommendation is implemented yet.
 
 ## 9. Recommended Next Step
 
-Build the ABO text baseline next.
+Create a small milestone release by merging `dev` into `main` after manual review of `git status`, `git diff`, and the latest `python -m pytest -v` result.
 
-Use the existing ABO fixture contract to define a small content-based product-similarity baseline from approved metadata fields such as `item_name`, `brand`, `bullet_point`, and `product_type`. Create a separate ABO protocol first, keep the implementation independent from RetailRocket, and add focused retrieval tests before processing larger ABO data.
+The project now has completed baseline evidence for the RetailRocket behavior track and a completed text-only product similarity baseline for the ABO track. This is a reasonable checkpoint for `main` because the current work is still small, reviewable, and covered by tests.
+
+If the milestone release is deferred, the next feature task should be to write the ABO image similarity protocol. Image similarity implementation should wait until that protocol is reviewed.
