@@ -1,166 +1,181 @@
-# Amazon Berkeley Objects Image Baseline Protocol
+# Amazon Berkeley Objects Image Similarity Baseline Protocol
 
 ## Purpose
 
-This document defines the protocol for a simple Amazon Berkeley Objects image-only product-to-product similarity baseline before implementation.
+This document defines the protocol for a simple Amazon Berkeley Objects image-based product similarity baseline before implementation.
 
-The baseline is intended to establish a reproducible reference for comparing product images using Amazon Berkeley Objects image assets and image mapping metadata. It should start with small deterministic fixtures and avoid full raw archive processing during the first implementation.
+The baseline is intended to create a realistic, reproducible image-only product-to-product similarity reference for local development. It should use Amazon Berkeley Objects product images and image metadata only as the similarity signal, starting with small deterministic fixtures rather than full raw archive processing.
 
 ## Dataset Track
 
 This protocol applies only to the `amazon_berkeley_text_images-based` dataset track.
 
-Amazon Berkeley Objects is used in this project for product metadata, text, and image similarity work. RetailRocket remains a separate behavior/event recommendation track and must not be joined to Amazon Berkeley Objects product, listing, or image identifiers.
+Amazon Berkeley Objects is used for product metadata, text, and image similarity work. RetailRocket remains a separate behavior/event recommendation track and must not be joined to Amazon Berkeley Objects product, listing, or image identifiers.
+
+The Amazon Berkeley Objects text baseline protocol, implementation, runner, and sample output artifact already exist. That text baseline is separate from this image-only protocol. Future multimodal similarity may compare or combine the text and image baselines later, but multimodal recommendation is not part of this task.
 
 ## Why This Baseline Is Needed
 
-The completed Amazon Berkeley Objects text baseline provides a text-only product-to-product similarity reference. An image-only baseline is needed next to define a separate visual similarity reference before any multimodal work is considered.
+The completed text baseline provides a metadata/text product similarity reference. A separate image baseline is needed to establish a visual similarity reference before any multimodal work is considered.
 
-This protocol helps ensure that future image work:
+This protocol helps ensure future image work:
 
-- Uses Amazon Berkeley Objects image data safely.
-- Starts from small deterministic sample fixtures.
+- Uses Amazon Berkeley Objects image assets safely.
+- Starts with small deterministic image fixtures.
 - Defines evaluation before implementation.
-- Avoids overclaiming production readiness or multimodal recommendation.
-- Provides a baseline that later image or multimodal methods can be compared against.
+- Avoids training a custom deep learning model for the baseline.
+- Avoids overclaiming production readiness or multimodal capability.
 
 ## What This Baseline Does
 
-The future baseline should compare product images and return visually similar product images or products.
+The future baseline should retrieve visually similar Amazon Berkeley Objects products using image features.
 
 It should:
 
-- Use Amazon Berkeley Objects image assets and image mapping metadata.
-- Select usable images from small deterministic fixtures first.
-- Produce image feature vectors using a simple reproducible image embedding approach.
-- Compare image vectors with cosine similarity.
-- Return top-K similar product images or products for a given source image or source product.
-- Exclude the source image from returned recommendations.
-- Use deterministic sorting and tie-breaking for repeatable output.
+- Use Amazon Berkeley Objects product images and image metadata only for similarity.
+- Generate one image embedding per product image.
+- Use a simple strategy for products with multiple images, such as using the main image or averaging image embeddings.
+- Use cosine similarity to retrieve top-K visually similar products.
+- Exclude the source product itself from returned recommendations.
+- Use deterministic tie-breaking by stable Amazon Berkeley Objects product identifier.
+- Include text metadata only for inspection and reporting where useful.
 
 ## What This Baseline Does Not Do
 
 This baseline does not:
 
 - Provide personalized recommendations.
-- Use RetailRocket user behavior, events, visitors, items, or transactions.
+- Use RetailRocket behavior data, users, events, visitors, items, or transactions.
 - Merge RetailRocket and Amazon Berkeley Objects data.
-- Use text fields as the primary similarity signal.
+- Use text metadata as the similarity signal.
 - Implement multimodal recommendation.
-- Use video, 360-degree, spin, or 3D assets.
-- Train a vision model from scratch.
-- Implement an Application Programming Interface (API), deployment stack, Retrieval-Augmented Generation (RAG), agents, Model Context Protocol (MCP), contextual bandits, or advanced production systems.
+- Use CLIP or multimodal embeddings in the first image-only baseline unless explicitly approved later.
+- Use video, spin, 360-degree, or 3D assets.
+- Train a custom deep learning model.
+- Implement an Application Programming Interface (API), deployment stack, Retrieval-Augmented Generation (RAG), agents, Model Context Protocol (MCP), contextual bandits, or advanced systems.
+- Claim image similarity is already implemented.
 - Claim production readiness or business impact before implementation and evaluation.
-- Claim that image similarity is already implemented.
 
-## Input Data
+## Input Assets
 
-The baseline should use Amazon Berkeley Objects image-related data only, such as:
+The baseline should use Amazon Berkeley Objects image-related assets only, such as:
 
-- Small deterministic image fixtures.
+- Small deterministic sample image fixtures.
 - Product-to-image mapping metadata.
-- Image identifiers.
+- Stable product identifiers.
+- Stable image identifiers.
 - Local sample image paths where available.
-- Product metadata only when needed for inspection or evaluation context, such as `item_id`, `product_type`, or category-like fields.
+- Image metadata needed to locate and validate sample images.
 
-The first implementation must not fully extract or process the full raw Amazon Berkeley Objects image archives. Any raw archive inspection should remain bounded and controlled.
+Text metadata such as `item_name`, `brand`, or `product_type` may be included in outputs for inspection and evaluation context, but it must not be used as the image similarity signal.
+
+The first implementation must not fully load, extract, or process the full raw Amazon Berkeley Objects image archives.
 
 ## Image Selection Strategy
 
-The first implementation should use a small, deterministic image selection strategy.
+The first implementation should use a small, deterministic image selection policy.
 
 It should:
 
-- Prefer existing sample fixtures under the Amazon Berkeley Objects sample track.
-- Select only images with valid local paths or approved fixture references.
-- Handle missing, unreadable, or unsupported image files safely.
-- Avoid extracting the full raw image archive.
-- Avoid processing every available image during initial baseline work.
-- Keep source image and candidate image identifiers stable across repeated runs.
+- Prefer existing Amazon Berkeley Objects sample fixtures.
+- Use only approved local sample image paths or bounded fixture references.
+- Validate that selected images exist and are readable.
+- Skip or report missing, unreadable, or unsupported images safely.
+- Avoid full raw archive extraction.
+- Avoid processing all available raw images during initial baseline work.
+- Keep product and image selection stable across repeated runs.
 
-When products have multiple images, the implementation should define a clear policy, such as using the main image first or evaluating each mapped image separately. The chosen policy should be documented in the implementation output.
+For products with multiple images, the implementation should define one simple policy before running similarity. Acceptable first policies include using the main image when available or averaging embeddings across a small bounded set of product images.
 
 ## Baseline Method
 
-The baseline should remain simple, reproducible, and image-only.
+The baseline should be image-only, simple, and reproducible.
 
-Possible future implementation options include:
+The expected method is:
 
-- Simple pretrained Convolutional Neural Network (CNN) embeddings.
-- Optional CLIP-style image embeddings later, if justified and dependency impact is reviewed.
-- Cosine similarity over image feature vectors.
+1. Load a small Amazon Berkeley Objects image fixture and product-image mapping.
+2. Select source and candidate images using the documented image selection policy.
+3. Generate one embedding per selected product image using a simple pretrained image embedding model.
+4. Prefer a lightweight pretrained computer vision model if already available later, such as ResNet-style embeddings or a similar standard feature extractor.
+5. Do not train a custom model for this baseline.
+6. Do not add new dependencies or model downloads without review.
+7. Compare image vectors using cosine similarity.
+8. Return top-K visually similar products.
 
-The initial implementation should prefer pretrained image features rather than training a new vision model from scratch. Any dependency or model download requirement should be reviewed before implementation.
+CLIP-style or other multimodal embeddings should not be used for this first image-only baseline unless explicitly approved later.
 
 ## Similarity Search Logic
 
-For a given source image or source product, the similarity search should:
+For a given source product, the similarity search should:
 
-- Resolve the source image from Amazon Berkeley Objects image mapping metadata.
-- Build or load image vectors for the source and candidate images.
-- Exclude the source image from returned results.
+- Resolve the source product image or images from Amazon Berkeley Objects image mapping metadata.
+- Build or load image vectors for source and candidate products.
+- Exclude the source product itself from returned recommendations.
 - Sort candidates by descending cosine similarity.
-- Apply deterministic tie-breaking, such as sorting by stable product identifier and image identifier.
-- Return top-K similar product images or products with similarity scores and useful inspection metadata.
+- Apply deterministic tie-breaking by stable Amazon Berkeley Objects product identifier.
+- Return top-K visually similar products with similarity scores and useful inspection metadata.
 
-The search should return an empty result or a clear error when the source image is missing, unreadable, or not included in the fitted candidate set.
+If a source product has no usable image, the implementation should return a clear error or an empty result according to the documented runner behavior.
 
 ## Evaluation Strategy
 
-Because this is an image-only product similarity baseline and not a personalized recommender, evaluation should focus on visual similarity quality and output validity.
+Because this is image-only product similarity and not personalized recommendation, evaluation should focus on visual relevance and output validity.
 
 Evaluation should include:
 
-- Manual visual spot-checking of similar images.
-- Product type or category consistency where metadata exists.
-- Duplicate and self-match prevention.
-- Top-K output validity, including stable product and image identifiers.
-- Coverage over products with usable images.
-- Deterministic repeatability across repeated runs.
-- Latency checks on small deterministic fixtures.
+- Manual visual spot-checking of retrieved products.
+- `product_type` or category consistency where metadata is available.
+- No self-recommendations.
+- No duplicate recommendations.
+- Image coverage over products with usable images.
+- Deterministic output for repeated runs with the same input.
+- Small fixture-based tests.
+- Latency checks on small samples.
 - Failure handling for missing, unreadable, or unsupported images.
 
-These checks should validate the baseline behavior without claiming production-level performance.
+These checks should validate baseline behavior without claiming production-level performance.
 
 ## Expected Outputs
 
 The implemented baseline should produce:
 
-- A top-K list of similar Amazon Berkeley Objects product images or products for each source image or product.
-- Similarity scores for returned candidates.
-- Source product and source image identifiers.
-- Candidate product and image identifiers.
-- Useful metadata for inspection, such as product name or product type where available.
-- Coverage and failure counts for usable, missing, and unreadable images.
-- A small, human-readable sample output artifact for review.
+- A top-K list of visually similar Amazon Berkeley Objects products for a source product.
+- Similarity scores for returned products.
+- Source product identifier and source image identifier or identifiers.
+- Candidate product identifiers and image identifiers.
+- Inspection metadata where available, such as `item_name`, `brand`, or `product_type`.
+- Coverage counts for usable and skipped images.
+- A small, human-readable sample output artifact.
 
 ## Risks and Limitations
 
 Key risks and limitations include:
 
-- Small image fixtures may not represent the full Amazon Berkeley Objects image distribution.
-- Visual similarity may not align with product usefulness, category relevance, or customer intent.
-- Missing or unreadable images can reduce coverage.
-- Pretrained image embeddings may introduce dependency, runtime, or model availability concerns.
-- Image-only similarity may miss important textual details such as brand, material, size, or compatibility.
-- Manual spot-checking is useful but subjective.
-- This baseline is not personalized, not multimodal, and not production-ready by itself.
+- Small fixtures may not represent the full Amazon Berkeley Objects image distribution.
+- Visual similarity may not match product usefulness, compatibility, or customer intent.
+- Missing or unreadable sample images can reduce coverage.
+- Pretrained image features may require dependency or model availability review.
+- Image-only similarity may miss important text-only attributes such as brand, size, material, or style.
+- Manual visual checks are useful but subjective.
+- This baseline is not personalized, not behavior-based, not multimodal, and not production-ready.
 
 ## Acceptance Criteria
 
 This protocol is accepted when:
 
 - The baseline is clearly defined as Amazon Berkeley Objects image-only product-to-product similarity.
-- RetailRocket is described only as a separate dataset track.
+- RetailRocket is kept separate and is not used in ABO image logic.
+- Text metadata is limited to inspection and reporting, not similarity scoring.
 - The first implementation is constrained to small deterministic fixtures.
 - Full raw Amazon Berkeley Objects image archives are not fully extracted or processed.
-- Possible future embedding approaches are described without requiring implementation yet.
-- Cosine similarity, top-K retrieval, source-image exclusion, and deterministic tie-breaking are specified.
-- Evaluation focuses on visual similarity validation and output quality, not personalized recommendation metrics.
+- A simple pretrained image embedding approach is specified without requiring dependency changes in this document.
+- CLIP-style or multimodal embeddings are excluded from the first implementation unless explicitly approved later.
+- Cosine similarity, top-K retrieval, source-product exclusion, and deterministic product identifier tie-breaking are specified.
+- Evaluation includes manual visual checks, output validity, coverage, determinism, small fixture testing, and latency checks.
 - The document does not claim image similarity, multimodal recommendation, API, deployment, or advanced systems are implemented.
 
 ## Next Step After This Protocol
 
-The recommended next step is to implement a small Amazon Berkeley Objects image baseline proof of concept using existing deterministic image fixtures and mapping metadata.
+The recommended next implementation step is to inspect the existing Amazon Berkeley Objects sample image fixtures and mapping metadata, then build a small bounded image-only baseline proof of concept.
 
-Before implementation, confirm the available fixture image paths, choose the initial pretrained embedding approach, and review any dependency or model download requirements. The implementation should remain image-only, bounded, and independent from RetailRocket.
+Before implementation, confirm the fixture image paths, choose the lightweight pretrained image feature approach, and review any dependency or model download requirements. The implementation should remain local, deterministic, image-only, and independent from RetailRocket.
