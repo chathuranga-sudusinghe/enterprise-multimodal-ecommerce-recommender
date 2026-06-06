@@ -52,6 +52,7 @@ The Python project should keep a minimal, intentional dependency set. Environmen
 - No committed secrets or local credentials.
 
 Dependencies should be added only when a concrete approved task requires them.
+The first CLIP-based ABO multimodal similarity dependency set is CPU-first and uses local Hugging Face Transformers model loading without token-based Inference API access.
 
 ## 6. Testing Before Deployment
 
