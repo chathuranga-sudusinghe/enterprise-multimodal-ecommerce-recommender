@@ -58,6 +58,10 @@ def normalize_metadata_text_value(value: Any) -> str:
 def build_combined_product_text(product: Mapping[str, Any]) -> str:
     """Build deterministic text from approved Amazon Berkeley Objects fields."""
 
+    cleaned_combined_text = normalize_metadata_text_value(product.get("combined_text"))
+    if cleaned_combined_text:
+        return cleaned_combined_text
+
     return " ".join(
         normalized
         for field in ABO_TEXT_FIELDS
@@ -88,6 +92,8 @@ class ABOTextSimilarityBaseline:
 
         for product in products:
             product_id = self._get_product_id(product)
+            if product_id in self._product_lookup:
+                raise ValueError(f"Duplicate Amazon Berkeley Objects product_id: {product_id}")
             self._product_lookup[product_id] = product
 
             combined_text = build_combined_product_text(product)

@@ -1,10 +1,14 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
 iniconfig==2.3.0
 numpy==2.4.6
 packaging==26.2
 pandas==3.0.3
+pillow==12.2.0
 pluggy==1.6.0
 Pygments==2.20.0
 pytest==9.0.3
 python-dateutil==2.9.0.post0
 six==1.17.0
 scikit-learn==1.9.0
+torch==2.12.0+cpu
+transformers==5.10.2

@@ -55,7 +55,7 @@ def test_runner_creates_valid_json_output_from_small_sample(tmp_path: Path) -> N
     assert saved_output["baseline_name"] == "abo_text_similarity_baseline"
     assert saved_output["dataset_track"] == "amazon_berkeley_text_images-based"
     assert saved_output["top_k"] == 2
-    assert saved_output["source_product_id"] == "lamp-unrelated"
+    assert saved_output["source_product_id"] == "plate-source"
     assert len(saved_output["recommendations"]) == 2
 
 
@@ -71,14 +71,14 @@ def test_output_includes_required_metadata_fields(tmp_path: Path) -> None:
     assert "assumptions" in output
     assert "limitations" in output
     assert output["source_product_metadata"] == {
-        "item_name": "brass table lamp",
-        "brand": "BrightRoom",
-        "product_type": "TABLE_LAMP",
-        "color": "brass",
-        "material": "metal",
-        "style": "classic",
+        "item_name": "white ceramic dinner plate",
+        "brand": "TableHome",
+        "product_type": "DINNER_PLATE",
+        "color": "white",
+        "material": "ceramic",
+        "style": "modern",
     }
-    assert set(output["recommendations"][0]) == {"product_id", "similarity_score", "metadata"}
+    assert set(output["recommendations"][0]) == {"item_id", "score", "item_name", "product_type"}
 
 
 def test_output_does_not_include_source_product_in_recommendations(tmp_path: Path) -> None:
@@ -89,7 +89,7 @@ def test_output_does_not_include_source_product_in_recommendations(tmp_path: Pat
         generated_at_utc="2026-06-03T00:00:00Z",
     )
 
-    recommendation_ids = {recommendation["product_id"] for recommendation in output["recommendations"]}
+    recommendation_ids = {recommendation["item_id"] for recommendation in output["recommendations"]}
 
     assert output["source_product_id"] not in recommendation_ids
 

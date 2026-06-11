@@ -28,6 +28,16 @@ def test_build_combined_product_text_from_abo_metadata_fields() -> None:
     assert "not included" not in combined_text
 
 
+
+def test_build_combined_product_text_prefers_cleaned_combined_text() -> None:
+    product = {
+        "item_id": "item-001",
+        "combined_text": "approved cleaned product text",
+        "item_name": "ignored fallback name",
+    }
+
+    assert build_combined_product_text(product) == "approved cleaned product text"
+
 def test_missing_and_empty_fields_are_handled_safely() -> None:
     product = {
         "item_id": "item-001",
@@ -101,6 +111,33 @@ def test_deterministic_tie_breaking_uses_product_identifier() -> None:
 
     assert [result.product_id for result in first_run] == ["candidate-a", "candidate-b"]
     assert [result.product_id for result in second_run] == ["candidate-a", "candidate-b"]
+
+
+def test_top_k_is_limited_to_available_candidates() -> None:
+    baseline = ABOTextSimilarityBaseline().fit(
+        [
+            {"item_id": "source", "item_name": "glass mixing bowl"},
+            {"item_id": "candidate-a", "item_name": "glass serving bowl"},
+            {"item_id": "candidate-b", "item_name": "cotton kitchen towel"},
+        ]
+    )
+
+    results = baseline.recommend_similar("source", top_k=10)
+
+    assert len(results) == 2
+    assert {result.product_id for result in results} == {"candidate-a", "candidate-b"}
+
+
+def test_duplicate_product_ids_raise_clear_error() -> None:
+    baseline = ABOTextSimilarityBaseline()
+
+    with pytest.raises(ValueError, match="Duplicate Amazon Berkeley Objects product_id"):
+        baseline.fit(
+            [
+                {"item_id": "duplicate", "item_name": "glass jar"},
+                {"item_id": "duplicate", "item_name": "ceramic jar"},
+            ]
+        )
 
 
 def test_unknown_source_product_raises_clear_error() -> None:
