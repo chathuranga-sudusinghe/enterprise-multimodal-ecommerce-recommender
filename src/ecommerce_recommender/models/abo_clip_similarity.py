@@ -39,6 +39,7 @@ class ABOCLIPSimilarityModel:
         text_weight: float = 0.5,
         image_weight: float = 0.5,
         device: str | None = None,
+        local_files_only: bool = False,
         model: Any | None = None,
         processor: Any | None = None,
     ) -> None:
@@ -46,6 +47,7 @@ class ABOCLIPSimilarityModel:
         self.text_weight = text_weight
         self.image_weight = image_weight
         self.device = device or "cpu"
+        self.local_files_only = local_files_only
         self.model = model
         self.processor = processor
 
@@ -105,8 +107,23 @@ class ABOCLIPSimilarityModel:
         if self.model is None or self.processor is None:
             from transformers import CLIPModel, CLIPProcessor
 
-            self.model = CLIPModel.from_pretrained(self.model_name)
-            self.processor = CLIPProcessor.from_pretrained(self.model_name)
+            try:
+                self.model = CLIPModel.from_pretrained(
+                    self.model_name,
+                    local_files_only=self.local_files_only,
+                )
+                self.processor = CLIPProcessor.from_pretrained(
+                    self.model_name,
+                    local_files_only=self.local_files_only,
+                )
+            except OSError as exc:
+                if self.local_files_only:
+                    raise RuntimeError(
+                        "CLIP model files are not available in the local Hugging Face "
+                        f"cache for {self.model_name!r}. Run once without "
+                        "--local-files-only to download them, then retry offline."
+                    ) from exc
+                raise
 
         if hasattr(self.model, "to"):
             self.model = self.model.to(self.device)
