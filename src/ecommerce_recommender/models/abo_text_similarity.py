@@ -58,6 +58,10 @@ def normalize_metadata_text_value(value: Any) -> str:
 def build_combined_product_text(product: Mapping[str, Any]) -> str:
     """Build deterministic text from approved Amazon Berkeley Objects fields."""
 
+    cleaned_combined_text = normalize_metadata_text_value(product.get("combined_text"))
+    if cleaned_combined_text:
+        return cleaned_combined_text
+
     return " ".join(
         normalized
         for field in ABO_TEXT_FIELDS

@@ -28,6 +28,16 @@ def test_build_combined_product_text_from_abo_metadata_fields() -> None:
     assert "not included" not in combined_text
 
 
+
+def test_build_combined_product_text_prefers_cleaned_combined_text() -> None:
+    product = {
+        "item_id": "item-001",
+        "combined_text": "approved cleaned product text",
+        "item_name": "ignored fallback name",
+    }
+
+    assert build_combined_product_text(product) == "approved cleaned product text"
+
 def test_missing_and_empty_fields_are_handled_safely() -> None:
     product = {
         "item_id": "item-001",
