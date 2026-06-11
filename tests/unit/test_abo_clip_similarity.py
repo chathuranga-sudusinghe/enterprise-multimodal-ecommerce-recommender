@@ -1,4 +1,6 @@
 from pathlib import Path
+import sys
+from types import SimpleNamespace
 from typing import Any, Sequence
 
 import pytest
@@ -225,3 +227,45 @@ def test_fusion_weights_affect_ranking_deterministically(tmp_path: Path) -> None
 
     assert text_weighted_results[0].product_id == "text-match"
     assert image_weighted_results[0].product_id == "image-match"
+
+
+def test_hugging_face_loaders_receive_local_files_only(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[str, bool]] = []
+
+    class Loader:
+        @classmethod
+        def from_pretrained(cls, model_name: str, local_files_only: bool = False) -> object:
+            calls.append((model_name, local_files_only))
+            return object()
+
+    monkeypatch.setitem(
+        sys.modules,
+        "transformers",
+        SimpleNamespace(CLIPModel=Loader, CLIPProcessor=Loader),
+    )
+
+    model = ABOCLIPSimilarityModel(local_files_only=True)
+    model._get_model_and_processor()
+
+    assert calls == [
+        ("openai/clip-vit-base-patch32", True),
+        ("openai/clip-vit-base-patch32", True),
+    ]
+
+
+def test_local_cache_miss_raises_clear_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    class MissingLoader:
+        @classmethod
+        def from_pretrained(cls, model_name: str, local_files_only: bool = False) -> object:
+            raise OSError("cache miss")
+
+    monkeypatch.setitem(
+        sys.modules,
+        "transformers",
+        SimpleNamespace(CLIPModel=MissingLoader, CLIPProcessor=MissingLoader),
+    )
+
+    model = ABOCLIPSimilarityModel(local_files_only=True)
+
+    with pytest.raises(RuntimeError, match="not available in the local Hugging Face cache"):
+        model._get_model_and_processor()
