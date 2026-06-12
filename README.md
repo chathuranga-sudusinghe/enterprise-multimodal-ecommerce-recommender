@@ -338,3 +338,12 @@ Planned future work, subject to evaluation evidence and scope approval:
 - Monitoring, model/data drift checks, deployment packaging, and operational readiness.
 
 These items are roadmap targets and should not be interpreted as currently implemented features.
+
+
+## AI-Assisted Development Disclosure
+
+This project is human-led and AI-assisted. AI tools supported selected planning, documentation, coding assistance, review, debugging, and project-structure decisions. Suggestions are not accepted automatically: all accepted changes, claims, and publication decisions remain under human review and responsibility.
+
+Git/GitHub review practices, tests, documentation review, and evidence-based checks are used before changes are accepted. The use of AI tools does not by itself establish production readiness, safety, reliability, or model quality.
+
+See [`AI_USAGE.md`](AI_USAGE.md) for the full disclosure.
