@@ -1,249 +1,362 @@
 # Current Project Status
 
-## 1. Current Project Direction
+## Executive Summary
 
-The Enterprise Multimodal E-Commerce Recommendation AI System now follows a two-track real-data strategy.
+This repository is a local, production-oriented recommendation engineering project with two independent tracks:
 
-| Track | Dataset | Current Purpose |
-| --- | --- | --- |
-| A | `RetailRocket_event-based` | Behavior and event-based recommendation |
-| B | `amazon_berkeley_text_images-based` | Product metadata, text, and image-based product similarity |
+- RetailRocket for behavior-based recommendation.
+- Amazon Berkeley Objects (ABO) for product text and image similarity.
 
-The tracks are intentionally independent. RetailRocket `visitorid` and `itemid` values must not be joined to Amazon Berkeley Objects (ABO) listing or image identifiers. The project must not imply that both datasets represent one company, one catalog, or one user population.
+It has progressed beyond discovery and planning. Implemented work includes track-specific fixtures and validation, bounded real-data preparation, RetailRocket and ABO baselines, CLIP multimodal similarity, offline/proxy evaluation, and a lightweight local orchestration demo.
 
-Video, spin, 360-degree, 3D recommendation, API implementation, deployment, Retrieval-Augmented Generation (RAG), agents, Model Context Protocol (MCP), contextual bandits, and advanced models remain outside the current project scope.
+It is not production deployed. There is no implemented API, service deployment, monitoring platform, CI/CD workflow, vector database, full MCP server/client, or autonomous agent runtime. Current evidence supports local engineering maturity and testability, not online recommendation quality or operational readiness.
 
-## 2. Completed Work
-
-### 2.1 Discovery and Alignment
-
-- Added safe RetailRocket discovery using header-only reads, streaming line counts, and chunked aggregation.
-- Added bounded ABO archive discovery without full extraction or image processing.
-- Recorded the confirmed two-track strategy and repository alignment findings.
-- Updated discovery scripts so raw-data and report paths resolve from the repository root rather than the current working directory.
-
-Evidence reports:
-
-- `docs/reports/retailrocket_dataset_discovery.md`
-- `docs/reports/abo_dataset_discovery.md`
-- `docs/reports/dataset_discovery_summary.md`
-- `docs/reports/full_repository_alignment_audit.md`
-
-### 2.2 Documentation Rebuild
-
-Rebuilt `docs/01_project_foundation.md` through `docs/07_deployment_plan.md` around the real-data strategy. The documents now separate RetailRocket behavior recommendation from ABO text/image similarity, prohibit fabricated joins, and defer advanced systems until baseline evidence exists.
-
-### 2.3 Sample Fixture Rebuild
-
-Replaced the deprecated unified synthetic sample design with tiny deterministic fixtures:
+Lifecycle used in this assessment:
 
 ```text
-data/sample/
-├── README.md
-├── retailrocket/
-└── amazon_berkeley_objects/
+Problem -> Data -> Baseline -> Advanced AI -> Evaluation -> Delivery -> Production -> Maintenance
 ```
 
-Fixtures exist for tests, examples, and Continuous Integration / Continuous Deployment (CI/CD) workflows only. They are not the primary Machine Learning (ML) datasets.
-
-### 2.4 Loading and Validation Update
-
-- Added track-specific RetailRocket fixture loading and validation.
-- Added ABO listing, image metadata, image path, and product-image mapping validation.
-- Removed active dependencies on the old unified synthetic `products/users/events` contract.
-
-### 2.5 Deprecated Baseline Cleanup
-
-Removed the retired synthetic popularity baseline assumptions and rebuilt the implementation around RetailRocket source fields only:
+## 1. Current Repository Structure Summary
 
 ```text
-timestamp, visitorid, event, itemid, transactionid
+.
+|-- README.md
+|-- AGENTS.md
+|-- pyproject.toml
+|-- requirements.txt
+|-- configs/                         # Present; no substantive tracked config
+|-- data/
+|   |-- raw/                         # Local real datasets; ignored
+|   |-- sample/                      # Tiny deterministic track fixtures
+|   |-- interim/                     # Placeholder
+|   `-- processed/                   # Local generated artifacts; ignored
+|-- docs/
+|   |-- 01_project_foundation.md ... 07_deployment_plan.md
+|   `-- reports/                     # Discovery, protocol, audit, status evidence
+|-- notebooks/
+|   `-- 03_abo_data_inspection.ipynb
+|-- scripts/                         # Discovery, cleaning, runners, evaluation, demo
+|-- src/ecommerce_recommender/
+|   |-- agents/
+|   |-- api/                         # Package placeholder only
+|   |-- core/                        # Package placeholder only
+|   |-- data/
+|   |-- evaluation/
+|   |-- features/                    # Package placeholder only
+|   |-- mcp_tools/
+|   |-- models/
+|   |-- monitoring/                  # Package placeholder only
+|   `-- utils/                       # Package placeholder only
+`-- tests/unit/                      # Focused unit tests
 ```
 
-### 2.6 RetailRocket Baseline Protocol and Pipeline
+The project uses a Python `src/` layout and targets Python 3.11+. `requirements.txt` pins the current data, ML, image, CLIP, and test environment. `pyproject.toml` contains minimal package and pytest configuration, but its project dependency list is empty.
 
-- Added `docs/reports/retailrocket_baseline_protocol.md`.
-- Implemented `RetailRocketPopularityRecommender` with provisional weights:
-  - `view`: `1.0`
-  - `addtocart`: `3.0`
-  - `transaction`: `5.0`
-- Added a chunked real-data runner that writes top RetailRocket items.
-- Added a temporal baseline evaluation pipeline for `HitRate@10` and `Recall@10`.
+## 2. Implemented Components
 
-The weights remain provisional and may be revised after evaluation review.
+### Problem
 
-### 2.7 ABO Text Baseline Protocol, Implementation, and Runner
+- Separate objectives for RetailRocket behavior ranking and ABO product similarity.
+- Explicit dataset provenance and prohibition on cross-dataset joins.
+- Video recommendation excluded.
 
-- Added `docs/reports/abo_text_baseline_protocol.md`.
-- Implemented a text-only Amazon Berkeley Objects product-to-product similarity baseline in `src/ecommerce_recommender/models/abo_text_similarity.py`.
-- Added focused unit tests in `tests/unit/test_abo_text_similarity.py`.
-- Added `scripts/run_abo_text_baseline.py` to run the baseline on small ABO sample fixtures.
-- Added runner tests in `tests/unit/test_run_abo_text_baseline.py`.
-- Added an inspectable sample output artifact in `docs/reports/abo_text_similarity_sample_output.json`.
+### Data
 
-This baseline uses only approved ABO metadata/text fields. It is not personalized, not behavior-based, not image-based, and not multimodal.
+- Safe RetailRocket discovery using header-only, streaming, and chunked reads.
+- Bounded ABO tar inspection without full extraction.
+- Separate deterministic fixtures, loaders, and validators.
+- ABO cleaning with multilingual text flattening, required-field checks, deduplication, image mapping, and CLIP-readiness flags.
+- Bounded extraction of requested ABO images for sample runners.
 
-## 3. Current Data Assets
+### Baseline
 
-### 3.1 Raw Data
+- RetailRocket event-weighted global popularity recommender.
+- Chunked RetailRocket runner and temporal evaluator.
+- ABO TF-IDF text similarity baseline.
+- ABO RGB histogram image similarity baseline.
+- Deterministic query-item exclusion and ranking tie-breaking.
 
-Raw data remains local and ignored by Git.
+### Advanced AI
 
-```text
-data/raw/RetailRocket_event-based/
-├── events.csv
-├── item_properties_part1.csv
-├── item_properties_part2.csv
-└── category_tree.csv
+- ABO CLIP text-image embedding similarity using `openai/clip-vit-base-patch32` by default.
+- Optional local-files-only model loading.
+- Optional OpenAI explanation of fixed recommendations with deterministic fallback.
 
-data/raw/amazon_berkeley_text_images-based/
-├── README.md
-├── abo-listings.tar
-└── abo-images-small.tar
-```
+### Evaluation and Delivery
 
-### 3.2 Deterministic Sample Fixtures
+- RetailRocket temporal offline evaluation.
+- ABO metadata-proxy comparison across TF-IDF, RGB histogram, and CLIP.
+- Reusable proxy precision, average precision, NDCG, match-rate, diversity, and score summaries.
+- Command-line scripts that produce local JSON, JSONL, and CSV artifacts.
+- No network service or user-facing application.
 
-```text
-data/sample/retailrocket/
-├── events_sample.csv
-├── item_properties_sample.csv
-└── category_tree_sample.csv
+## 3. Existing Datasets and Data Assumptions
 
-data/sample/amazon_berkeley_objects/
-├── listings_sample.jsonl
-├── images_sample.csv
-└── image_paths_sample.txt
-```
+### RetailRocket
 
-### 3.3 Processed Local Artifacts
+Expected local raw files:
 
-The following generated artifacts currently exist under `data/processed/` and are ignored by Git:
+- `data/raw/RetailRocket_event-based/events.csv`
+- `data/raw/RetailRocket_event-based/item_properties_part1.csv`
+- `data/raw/RetailRocket_event-based/item_properties_part2.csv`
+- `data/raw/RetailRocket_event-based/category_tree.csv`
 
-- `retailrocket_baseline_top_items.csv`
-- `retailrocket_baseline_evaluation.json`
+Confirmed event fields are `timestamp`, `visitorid`, `event`, `itemid`, and `transactionid`. Confirmed events are `view`, `addtocart`, and `transaction`.
 
-These are reproducible local outputs, not committed source assets.
+Assumptions:
 
-### 3.4 Committed Report Artifacts
+- Visitor and item identifiers are dataset-local.
+- The baseline is global and non-personalized.
+- The temporal split uses timestamps, but the model does not represent sessions, recency decay, availability, or user history.
+- Provisional weights are `view=1.0`, `addtocart=3.0`, and `transaction=5.0`.
 
-The following small report artifacts are committed for inspection and documentation:
+### ABO
 
-- `docs/reports/retailrocket_baseline_protocol.md`
-- `docs/reports/abo_text_baseline_protocol.md`
-- `docs/reports/abo_text_similarity_sample_output.json`
+Expected local raw files:
 
-## 4. Current Code Status
+- `data/raw/amazon_berkeley_text_images-based/abo-listings.tar`
+- `data/raw/amazon_berkeley_text_images-based/abo-images-small.tar`
+- `data/raw/amazon_berkeley_text_images-based/README.md`
 
-| Area | Current Status |
-| --- | --- |
-| Fixture loaders | RetailRocket and ABO fixture loaders implemented |
-| Validators | Track-specific RetailRocket and ABO validators implemented |
-| RetailRocket baseline | Event-weighted popularity recommender implemented |
-| RetailRocket runner | Chunked raw-event aggregation and top-item CSV output implemented |
-| RetailRocket evaluator | Chunked temporal split evaluation and JSON output implemented |
-| Discovery scripts | RetailRocket and ABO discovery scripts implemented with repository-root paths |
-| ABO text baseline | Text-only product-to-product similarity baseline implemented |
-| ABO text runner | Small fixture-based runner and JSON report artifact implemented |
-| ABO image similarity | Not implemented yet |
-| Application Programming Interface (API) | Not implemented yet |
-| Deployment stack | Not implemented yet |
+Confirmed fields include `item_id`, `item_name`, `brand`, `bullet_point`, `product_type`, `color`, `material`, `style`, `main_image_id`, and `other_image_id`.
 
-Key implementation files:
+Assumptions:
 
-- `src/ecommerce_recommender/data/loading.py`
-- `src/ecommerce_recommender/data/validation.py`
-- `src/ecommerce_recommender/models/baseline.py`
-- `src/ecommerce_recommender/models/abo_text_similarity.py`
-- `scripts/run_retailrocket_baseline.py`
-- `scripts/evaluate_retailrocket_baseline.py`
-- `scripts/run_abo_text_baseline.py`
+- ABO supports catalog similarity, not personalization.
+- Text normalization prefers known English entries, then falls back to the first valid value.
+- `main_image_id` is mapped through ABO image metadata.
+- Cleaned CLIP-ready records require approved text and a usable main image.
+- Product-type equality is only proxy relevance because ABO has no behavior or relevance labels.
 
-## 5. Test Status
+RetailRocket and ABO identifiers are unrelated and must never be joined.
 
-The latest relevant pytest run completed successfully:
+## 4. Existing Baselines and Evaluation Outputs
 
-```text
-python -m pytest -v
-42 passed
-```
+### RetailRocket Popularity Baseline
 
-Current unit coverage includes:
+Local artifact: `data/processed/retailrocket_baseline_evaluation.json`.
 
-- RetailRocket and ABO fixture loading.
-- RetailRocket and ABO fixture validation.
-- ABO product-image mapping checks.
-- RetailRocket weighted popularity ranking.
-- Unsupported RetailRocket event handling.
-- Deterministic RetailRocket tie-breaking.
-- Chunked RetailRocket runner aggregation and output creation.
-- Temporal split calculation.
-- Chunked train-score and test-relevance aggregation.
-- Visitor-level baseline metrics.
-- Evaluation JSON output creation.
-- ABO text metadata normalization and combined text construction.
-- ABO text product-to-product similarity ranking.
-- ABO source-product exclusion and deterministic tie-breaking.
-- ABO text baseline error handling for unknown products and unfitted recommenders.
-- ABO text runner output creation, metadata fields, source exclusion, deterministic output, and small fixture loading.
-
-The latest evaluator and runner tests use only temporary files or small deterministic fixtures. They do not load full raw ABO tar files.
-
-## 6. RetailRocket Baseline Status
-
-The first real RetailRocket baseline is implemented and evaluated. It is intentionally simple: one global top-K ranking from event-weighted train interactions. This establishes an honest reference point for later improvements.
-
-Latest local evaluation artifact:
-
-```text
-data/processed/retailrocket_baseline_evaluation.json
-```
-
-| Metric | Value |
+| Metric | Current local result |
 | --- | ---: |
-| Temporal split timestamp | `1440160551107` |
-| Train ratio | `0.8` |
-| Train events | `2,266,414` |
-| Test events | `489,687` |
-| Evaluated visitors | `275,826` |
-| HitRate@10 | `0.0081645675` |
-| Recall@10 | `0.0073435373` |
+| Train events | 2,266,414 |
+| Test events | 489,687 |
+| Evaluated visitors | 275,826 |
+| HitRate@10 | 0.0081645675 |
+| Recall@10 | 0.0073435373 |
 
-These metric values are acceptable for a first non-personalized popularity baseline. They provide a measurable floor rather than a production-quality target. Later RetailRocket methods must use the same evaluation protocol when claiming improvement.
+This is a measurable floor, not production-quality evidence.
 
-## 7. Remaining Work
+### ABO TF-IDF Baseline
 
-### 7.1 Recommended Near-Term Work
+The current 100-product, one-query proxy output reports:
 
-- Review the completed ABO text baseline and sample output artifact.
-- Decide whether to create a small milestone release by merging `dev` into `main`.
-- If continuing feature work first, start the ABO image similarity protocol before implementation.
+- Product-type match@5: 0.60.
+- Proxy precision@5: 0.60.
+- Proxy NDCG@5: 0.7123.
 
-### 7.2 Later Work
+### ABO RGB Histogram Baseline
 
-- Add ABO image similarity after the text baseline is reviewed and accepted.
-- Compare text, image, and later multimodal ABO methods under the same ABO protocol.
-- Explore stronger RetailRocket methods only after preserving baseline comparability.
-- Add API, monitoring, and deployment work only after stable baseline evidence exists.
-- Consider Retrieval-Augmented Generation (RAG), agentic workflows, Model Context Protocol (MCP), and contextual bandits only when a justified enterprise use case exists.
+The current 100-product, one-query proxy output reports:
 
-## 8. Risks and Warnings
+- Product-type match@5: 0.00.
+- Proxy precision@5: 0.00.
+- Proxy NDCG@5: 0.00.
 
-- Do not merge RetailRocket and ABO identifiers.
-- Do not restore the deprecated unified synthetic sample design.
-- Do not introduce video recommendation into the current scope.
-- Do not describe fixtures as primary ML datasets.
-- Do not overclaim API, deployment, advanced-model, or production readiness.
-- Keep raw RetailRocket reads chunked and ABO archive inspection bounded.
-- Preserve ABO attribution and license notes in future public-facing documentation.
-- Compare advanced methods only against the corresponding track baseline under the same protocol.
-- Treat the ABO text baseline as product similarity only; do not describe it as personalized recommendation.
-- Do not claim ABO image similarity or multimodal recommendation is implemented yet.
+### Evidence Limits
 
-## 9. Recommended Next Step
+- ABO results use one bounded query and product-type proxy relevance.
+- There is no representative multi-query evaluation, human judgment study, online experiment, click-through evaluation, or conversion evaluation.
+- Most outputs are ignored local files under `data/processed/`, not immutable release evidence.
 
-Create a small milestone release by merging `dev` into `main` after manual review of `git status`, `git diff`, and the latest `python -m pytest -v` result.
+## 5. Existing Advanced AI Components
 
-The project now has completed baseline evidence for the RetailRocket behavior track and a completed text-only product similarity baseline for the ABO track. This is a reasonable checkpoint for `main` because the current work is still small, reviewable, and covered by tests.
+ABO CLIP multimodal similarity is implemented:
 
-If the milestone release is deferred, the next feature task should be to write the ABO image similarity protocol. Image similarity implementation should wait until that protocol is reviewed.
+- Combines text and image embeddings.
+- Uses normalized embedding similarity.
+- Supports CPU-oriented execution and local Hugging Face cache loading.
+- Excludes the query item and returns bounded top-K results.
+
+The current one-query proxy output reports product-type match@5 of 0.80 and proxy NDCG@5 of 0.7606. It outperforms the two baselines for that sample only; it does not establish general superiority.
+
+No advanced RetailRocket model, learned ranker, sequence model, two-tower model, graph model, contextual bandit, fine-tuning workflow, or online learner exists.
+
+## 6. Existing Agentic/MCP-Style Components
+
+The repository includes:
+
+- `RetrievalAgent` for catalog and precomputed-result loading.
+- `PolicyCheckAgent` for deterministic candidate checks.
+- `ExplanationAgent` for deterministic or optional OpenAI explanations.
+- `RecommendationOrchestrator` for structured JSON composition.
+- Local helper functions under `mcp_tools/`.
+
+These are not a full MCP or autonomous-agent implementation:
+
+- No MCP server/client transport or protocol negotiation.
+- No resource registration, remote tool execution, or exposed MCP schemas.
+- No autonomous tool, model, or recommendation selection.
+- The optional LLM cannot add, remove, reorder, or rerank products.
+
+Accurate description: **lightweight deterministic local orchestration with MCP-style tool boundaries**.
+
+## 7. Existing Tests and Test Coverage Summary
+
+Tests cover:
+
+- Fixture loading and track validation.
+- RetailRocket schema, weights, ranking, chunked runner, temporal split, and metrics.
+- ABO cleaning, multilingual text, archive mapping, and bounded image extraction.
+- TF-IDF, RGB histogram, and mocked CLIP behavior.
+- Runner output contracts.
+- ABO proxy metrics.
+- MCP-style helpers, policy checks, agents, fallback, mocked OpenAI path, and orchestration.
+
+Verified during this audit:
+
+```text
+TMPDIR=/tmp .venv/bin/python -m pytest -q
+99 passed in 14.97s
+```
+
+Limitations:
+
+- No line or branch coverage percentage is configured.
+- Tests are unit-focused; no formal integration, end-to-end, load, security, or deployment suite exists.
+- Real raw-data workflows are not comprehensively exercised in CI.
+- Real CLIP environment/cache integration remains separate from mocked unit coverage.
+- README says 90 tests, which is stale relative to the verified 99.
+
+## 8. Existing Documentation Summary
+
+Strong evidence documents include the two dataset discovery reports, discovery summary, repository alignment audit, RetailRocket protocol, ABO text protocol, and ABO image protocol/design/fixture review.
+
+The seven core lifecycle docs provide good discovery-first and evidence-gated principles. However, several still describe baselines, image similarity, agents, MCP, and advanced AI as future work even though local implementations now exist.
+
+README is the most current overview. It correctly states that the project is local and not deployed, but its test count is stale and advanced-model results need stronger bounded-proxy qualification.
+
+The previous status report was stale: it reported 42 tests and said ABO image similarity, agentic workflows, and MCP-style components were not implemented. This report replaces that snapshot.
+
+## 9. Missing Components
+
+### Problem and Data
+
+- Explicit production users, surfaces, business thresholds, and service-level objectives.
+- Versioned processed-data contracts and lineage metadata.
+- Automated real-data quality reports and artifact manifests/checksums.
+
+### Evaluation
+
+- Representative ABO multi-query evaluation.
+- Human relevance judgments or behavior-backed labels for ABO.
+- RetailRocket comparison methods under the same protocol.
+- Confidence intervals, sensitivity analysis, ablations, error analysis, latency, and resource benchmarks.
+
+### Delivery, Production, and Maintenance
+
+- FastAPI or another serving API.
+- Persisted retrieval index/vector database.
+- Authentication, authorization, rate limiting, and service contracts.
+- Docker, CI/CD, cloud, or Kubernetes implementation.
+- Monitoring, drift detection, alerting, dashboards, and incident runbooks.
+- Model registry, promotion, rollback automation, and maintenance ownership.
+
+### Engineering Quality
+
+- Substantive configuration under `configs/`.
+- Intentional dependencies in `pyproject.toml`.
+- A safe, useful `.env.example`.
+- Formatting, type checking, dependency scanning, and coverage gates.
+
+## 10. Overclaiming Risks
+
+| Risk | Required control |
+| --- | --- |
+| Calling the project production-ready | Describe it as local, production-oriented, and pre-production. |
+| Calling helpers an MCP system | State that no MCP server/client exists. |
+| Calling orchestration autonomous agents | State that retrieval and policy flow are deterministic. |
+| Claiming CLIP is generally superior | Limit the claim to the bounded proxy sample. |
+| Treating ABO proxy metrics as user relevance | Label product-type relevance as metadata proxy evidence. |
+| Treating unit tests as operational readiness | Separate unit evidence from production validation. |
+| Presenting local outputs as release evidence | Label `data/processed/` outputs as ignored and reproducible. |
+| Implying one unified commerce dataset | Preserve independent track provenance. |
+| Claiming API/monitoring/deployment exists | Package placeholders and plans are not implementations. |
+| Reporting stale test counts | Cite the exact latest test command and result. |
+
+## 11. Recommended Restructuring Plan
+
+1. Approve this inventory as the current source of truth.
+2. Reconcile README implementation status and test evidence.
+3. Update `docs/01_project_foundation.md` through `docs/07_deployment_plan.md` one file at a time.
+4. Add a lifecycle status matrix for both tracks: Problem, Data, Baseline, Advanced AI, Evaluation, Delivery, Production, Maintenance.
+5. Promote concise reproducible evaluation summaries into reviewed docs while keeping generated artifacts ignored.
+6. Define a representative ABO evaluation protocol before further model claims.
+7. Decide whether the agentic/MCP-style demo remains an explicitly optional demo; do not expand it during restructuring.
+8. Align package metadata, configuration documentation, and test/coverage policy after documentation approval.
+
+Do not move files or redesign the package during this documentation pass.
+
+## 12. Recommended Next 5 Implementation Phases
+
+### Phase 1: Status and Documentation Alignment
+
+Correct stale statements, add lifecycle status/evidence links, and preserve discovery reports unchanged.
+
+Exit: README and core docs agree on implemented, planned, and production-only capabilities.
+
+### Phase 2: Data Contract and Reproducibility Hardening
+
+Version processed schemas, add provenance/manifests, bounded validation commands, and tests against accidental unbounded reads.
+
+Exit: bounded inputs produce traceable outputs with validated schemas.
+
+### Phase 3: Evaluation Hardening
+
+Build a representative ABO multi-query set and add aggregate metrics, uncertainty, error analysis, latency, and resource measurements.
+
+Exit: TF-IDF, RGB, and CLIP comparisons are supported by more than one proxy query.
+
+### Phase 4: Baseline Improvement Experiments
+
+Evaluate one controlled RetailRocket candidate, such as recency-aware popularity, under the existing protocol. Add only justified ABO ablations.
+
+Exit: claimed improvements are repeatable against the correct baseline.
+
+### Phase 5: Delivery Readiness Design
+
+Define future API contracts, fallback behavior, latency budgets, security boundaries, observability, and deployment acceptance criteria. Do not implement delivery infrastructure yet.
+
+Exit: reviewed delivery design with explicit Go/No-Go gates.
+
+## 13. Files/Folders That Should Not Be Changed Yet
+
+- `data/raw/` and all raw files.
+- `docs/reports/retailrocket_dataset_discovery.md`.
+- `docs/reports/abo_dataset_discovery.md`.
+- `docs/reports/dataset_discovery_summary.md`.
+- `docs/reports/full_repository_alignment_audit.md`.
+- Existing `data/processed/` artifacts unless intentionally regenerating them under an approved protocol.
+- `src/ecommerce_recommender/api/` until delivery contracts are approved.
+- `src/ecommerce_recommender/monitoring/` until an operational service exists.
+- Agentic and MCP-style modules until their narrative role is approved.
+- Fixture schemas and baseline weights without a separate protocol review.
+- Docker, cloud, Kubernetes, RAG, vector database, and deployment files.
+
+The discovery/alignment reports are historical evidence. Their stale observations should be understood in context, not silently rewritten.
+
+## 14. Go/No-Go Recommendation for Restructuring
+
+**GO for documentation-first restructuring with strict scope controls.**
+
+The repository has enough implementation and test evidence to justify documentation alignment. The immediate need is consistency, not more architecture.
+
+Conditions:
+
+- Make small, reviewable documentation changes.
+- Preserve raw data, discovery evidence, source code, tests, and generated outputs.
+- Do not add FastAPI, RAG, MCP transport, autonomous agents, monitoring, Docker, cloud, or Kubernetes.
+- Do not claim production deployment or general model superiority.
+- Require separate approval before code restructuring or new model work.
+
+**NO-GO for production delivery work.** Evaluation breadth, reproducibility controls, integration testing, service design, security, observability, and maintenance processes are not sufficient.
