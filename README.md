@@ -304,6 +304,12 @@ python -m pytest -q   tests/unit/test_abo_recommendation_tools.py   tests/unit/t
 
 Current repository evidence: **90 tests pass**.
 
+## Continuous Integration
+
+GitHub Actions runs `python -m pytest -q` on pull requests and pushes to `dev` and `main`. This workflow is a repository quality gate only; it does not deploy the project, run production operations, or imply production readiness.
+
+The workflow installs `requirements.txt`, including the CPU PyTorch and Transformers dependencies used by CLIP-related tests. Those dependencies can make CI setup heavier than the fixture-only test data itself.
+
 ## Security and Secrets
 
 - `.env` is ignored and must never be committed.
