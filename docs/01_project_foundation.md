@@ -26,10 +26,10 @@ This project develops those capabilities separately before considering any futur
 The project objectives are to:
 
 1. Build safe adapters for discovered real-data schemas.
-2. Establish deterministic fixtures for tests and Continuous Integration / Continuous Deployment (CI/CD) workflows.
+2. Establish deterministic fixtures for tests and the basic pull-request quality gate.
 3. Define leakage-aware evaluation protocols for each dataset track.
-4. Implement simple, measurable baselines only after protocol approval.
-5. Compare later advanced methods against the corresponding baseline under the same protocol.
+4. Maintain simple, measurable baselines as the approved local reference point.
+5. Compare advanced or experimental methods against the corresponding baseline under the same protocol.
 6. Add service, monitoring, and governance layers only when supporting evidence exists.
 
 ## 4. Confirmed Two-Track Dataset Strategy
@@ -53,29 +53,28 @@ RetailRocket and ABO are independent datasets. Their visitor, item, listing, and
 
 ## 5. Current Scope
 
-The current phase includes:
+The current active milestone is Data and Evaluation Evidence Hardening. The current local scope includes:
 
 - Safe dataset discovery.
-- Documentation restructuring from discovery evidence.
+- Documentation alignment from discovery and baseline evidence.
 - Tiny deterministic fixture contracts.
-- Safe raw-data adapter planning.
-- Track-specific validation planning.
-- Separate baseline and evaluation protocol design.
+- Safe raw-data adapters and validators.
+- Track-specific baseline implementations.
+- Separate baseline and evaluation reports.
+- Bounded processed-artifact manifesting and reproducibility notes.
 
 Video recommendation is excluded from the current scope.
 
 ## 6. Out-of-Scope Boundaries
 
-The current phase does not include:
+The current active milestone does not include:
 
 - Cross-dataset identity mapping.
 - Video, spin, 360-degree, or 3D recommendation.
-- Model training before protocol approval.
-- Hardcoded baseline event weights before protocol approval.
 - Application Programming Interface (API) implementation.
 - Retrieval-Augmented Generation (RAG).
-- Agentic workflows.
-- Model Context Protocol (MCP) integration.
+- Production agentic workflows.
+- Production Model Context Protocol (MCP) server or client integration.
 - Contextual bandit optimization.
 - Cloud deployment or Kubernetes.
 
@@ -130,9 +129,9 @@ No combined score should be produced across unrelated datasets.
 5. Approve separate evaluation protocols.
 6. Implement and evaluate the RetailRocket baseline.
 7. Implement and evaluate the ABO metadata/text baseline.
-8. Add controlled image-similarity experiments.
-9. Consider API, monitoring, and deployment layers after baseline evidence exists.
-10. Evaluate future enterprise extensions only when they add demonstrated value.
+8. Add controlled image and CLIP similarity experiments with bounded evaluation.
+9. Harden artifact manifests and multi-query evaluation evidence.
+10. Consider API, monitoring, and deployment layers only after stronger evaluation and delivery readiness evidence exists.
 
 ## 11. Key Risks
 
@@ -142,7 +141,7 @@ No combined score should be produced across unrelated datasets.
 | Full-memory loading of large raw files | Require header-only, streaming, chunked, or bounded archive reads |
 | Premature model claims | Require approved protocols and baseline comparisons |
 | Data-role confusion | Treat `data/sample/` as fixture-only and keep raw data ignored |
-| Scope creep | Keep video and advanced orchestration out of the current phase |
+| Scope creep | Keep video, production agent systems, and deployment infrastructure out of the current milestone |
 | License or attribution gaps | Preserve ABO attribution and license notes in public-facing documentation |
 
 ## 12. Governance Expectations

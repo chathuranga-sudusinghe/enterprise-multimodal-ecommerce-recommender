@@ -31,7 +31,13 @@ This repository addresses those needs through separate dataset-specific tracks. 
 | MCP-style controlled tool interfaces | Implemented as a local abstraction, not a full MCP server |
 | FastAPI, vector database, monitoring, and deployment | Not implemented |
 
-The current full test suite contains **90 passing tests**. This is test evidence for the repository state, not a claim of production deployment readiness.
+The test suite is intended to run against committed deterministic fixtures without requiring raw datasets. Test results are local quality evidence, not a claim of production deployment readiness.
+
+## Current Framework Checkpoint
+
+This repository is currently a **Portfolio-level local AI/ML engineering project** under the Enterprise AI/ML Engineering Framework v2.1.0. The last completed checkpoint is **Baseline Complete**: Data is complete for the current local scope, RetailRocket and ABO baselines exist, and Evaluation is partial.
+
+The active milestone is **Data and Evaluation Evidence Hardening**. Delivery, Production, and Maintenance remain open. FastAPI, vector database, monitoring, rollback, deployment, and production operation are roadmap-only items unless future repository evidence proves otherwise.
 
 ## Architecture Overview
 
@@ -225,6 +231,12 @@ Generated processed artifacts are local outputs and can be reproduced from the r
 
 ## Running Key Workflows
 
+The project has three reproducibility modes:
+
+- Fixture-only tests use committed files under `data/sample/` and should not require raw datasets.
+- Raw-data workflows require local files under `data/raw/` and write generated artifacts under ignored `data/processed/`.
+- CLIP workflows require PyTorch, Transformers, Pillow, and either an existing Hugging Face model cache or an approved first run without `--local-files-only`.
+
 ### RetailRocket Baseline
 
 ```bash
@@ -302,7 +314,7 @@ python -m pytest -q tests/unit/test_abo_proxy_similarity.py
 python -m pytest -q   tests/unit/test_abo_recommendation_tools.py   tests/unit/test_abo_recommendation_agents.py
 ```
 
-Current repository evidence: **90 tests pass**.
+The exact passing test count can change as tests are added. Use the command output from the current environment as the source of truth rather than relying on a hardcoded count.
 
 ## Continuous Integration
 

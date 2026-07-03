@@ -6,16 +6,17 @@ This document defines the deployment maturity path for the Enterprise Multimodal
 
 ## 2. Current Phase
 
-The current phase includes:
+The current active milestone is Data and Evaluation Evidence Hardening. It includes:
 
-- Dataset discovery.
-- Documentation restructuring.
-- Deterministic fixture contract design.
-- Safe adapter and validation planning.
-- Separate evaluation protocol planning.
-- Baseline planning only.
+- Completed local dataset discovery evidence.
+- Documentation and report alignment.
+- Deterministic fixture contracts.
+- Safe adapters and validators.
+- Baseline implementations and partial evaluation evidence.
+- Processed-artifact manifesting and ABO multi-query evaluation design.
+- A basic GitHub Actions pytest quality gate.
 
-The current phase does not include model training, API implementation, Docker deployment, cloud deployment, or Kubernetes.
+The current milestone does not include new model-family implementation, API implementation, Docker deployment, cloud deployment, monitoring, rollback automation, or Kubernetes.
 
 ## 3. Local Development Workflow
 
@@ -25,7 +26,8 @@ The initial development environment is:
 - Visual Studio Code.
 - Git with small focused branches and manual review.
 - Python `>=3.11`.
-- pytest for automated tests when code changes resume.
+- pytest for automated tests.
+- GitHub Actions for a basic pull-request and branch quality gate only.
 
 Development should remain reproducible without hardcoded local absolute paths.
 
@@ -38,9 +40,9 @@ data/raw/RetailRocket_event-based/
 data/raw/amazon_berkeley_text_images-based/
 ```
 
-`data/sample/` should later contain only tiny deterministic fixtures for tests, examples, and Continuous Integration / Continuous Deployment (CI/CD). It is not the primary ML dataset.
+`data/sample/` contains only tiny deterministic fixtures for tests, examples, and the basic CI quality gate. It is not the primary ML dataset.
 
-Future processed artifacts should be lightweight, reproducible, provenance-aware, and stored outside raw folders.
+Processed artifacts should be lightweight, reproducible, provenance-aware, and stored outside raw folders. Current generated outputs remain under ignored `data/processed/`.
 
 ## 5. Python Environment Direction
 
@@ -106,9 +108,11 @@ After evidence gates are met, a local API may expose separate track-specific cap
 
 Service contracts must preserve dataset provenance and must not imply cross-dataset identity mappings.
 
-## 11. Future CI/CD Direction
+## 11. CI Quality Gate and Future CI/CD Direction
 
-Future CI/CD workflows should:
+The current `.github/workflows/ci.yml` workflow installs `requirements.txt`, installs the project editable with `--no-deps`, and runs `python -m pytest -q` on pull requests and pushes to `dev` and `main`. This is a quality gate only; it does not deploy, package containers, monitor services, or operate production infrastructure.
+
+Future delivery CI/CD, if approved later, should:
 
 - Install the package in a reproducible environment.
 - Run track-specific tests against deterministic fixtures.
