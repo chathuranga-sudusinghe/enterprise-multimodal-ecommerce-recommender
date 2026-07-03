@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-This document defines the real-data design direction for the Enterprise Multimodal E-Commerce Recommendation AI System. It records discovered source schemas, proposes canonical contracts for later approval, and separates raw datasets from tiny deterministic fixtures.
+This document defines the real-data design direction for the Enterprise Multimodal E-Commerce Recommendation AI System. It records discovered source schemas, current local processed artifacts, and the separation between raw datasets and tiny deterministic fixtures.
 
 ## 2. Raw Data Folder Layout
 
@@ -76,7 +76,7 @@ ABO listing records expose optional multilingual and structured fields including
 | `main_image_id` | Primary ABO image mapping |
 | `other_image_id` | Additional ABO image mappings |
 
-Field availability varies by listing and locale. Future adapters must define optional-field handling explicitly.
+Field availability varies by listing and locale. The current cleaning workflow handles optional fields explicitly, and future changes should keep that behavior documented.
 
 ### 4.2 Image Metadata
 
@@ -89,7 +89,7 @@ Field availability varies by listing and locale. Future adapters must define opt
 
 ## 5. Canonical Interaction Schema Direction
 
-A future RetailRocket adapter may expose a canonical interaction schema such as:
+RetailRocket adapters and reports may expose a canonical interaction schema such as:
 
 | Canonical Field | RetailRocket Source | Notes |
 | --- | --- | --- |
@@ -100,11 +100,11 @@ A future RetailRocket adapter may expose a canonical interaction schema such as:
 | `transaction_id` | `transactionid` | Nullable |
 | `source_dataset` | Constant metadata | Record RetailRocket provenance |
 
-This is a design direction for approval, not an implemented adapter contract.
+This remains a design reference; raw source field names must stay visible in reports.
 
 ## 6. Canonical Product Schema Direction
 
-A future ABO adapter may expose a canonical product schema such as:
+The current ABO cleaning workflow uses a canonical product direction such as:
 
 | Canonical Field | ABO Source | Notes |
 | --- | --- | --- |
@@ -124,21 +124,22 @@ This design does not imply any connection to RetailRocket `itemid` values.
 
 ## 7. Processed Data Direction
 
-Future processed artifacts should be small, reproducible, provenance-aware, and stored separately from raw files. Likely categories include:
+Processed artifacts should be bounded, reproducible, provenance-aware, and stored separately from raw files. Current and likely categories include:
 
-- RetailRocket canonical interaction partitions.
-- RetailRocket approved temporal split metadata.
+- RetailRocket baseline top-item output.
+- RetailRocket temporal baseline evaluation output.
 - ABO normalized listing records.
 - ABO controlled product-to-image mappings.
-- Future track-specific features or embeddings after approval.
+- ABO TF-IDF, RGB histogram, and CLIP similarity outputs.
+- ABO proxy evaluation output.
 
-Processed artifacts should not be committed unless they are intentionally small, safe, and reviewable.
+Processed artifacts should not be committed unless they are intentionally small, safe, and reviewable. The current local manifest is `docs/reports/data_processed_artifact_manifest.md`.
 
 ## 8. Sample Fixture Role
 
 `data/sample/` is reserved for tiny deterministic fixtures used by tests, examples, and CI. It is not the primary ML dataset.
 
-Future fixture structure should be defined conceptually as:
+Current fixture structure is:
 
 ```text
 data/sample/
@@ -146,7 +147,7 @@ data/sample/
 └── amazon_berkeley_objects/
 ```
 
-Fixture files should mirror approved canonical or discovered schemas. The old unified synthetic `products.csv`, `users.csv`, and `events.csv` contract is deprecated. Fixture files are not created in this documentation task.
+Fixture files should mirror approved canonical or discovered schemas. The old unified synthetic `products.csv`, `users.csv`, and `events.csv` contract is deprecated.
 
 ## 9. Validation Expectations
 

@@ -2,9 +2,9 @@
 
 ## 1. Purpose
 
-This document defines the architecture direction for the Enterprise Multimodal E-Commerce Recommendation AI System. The current architecture is local-first, discovery-first, and deliberately split into two independent dataset tracks.
+This document defines the architecture direction for the Enterprise Multimodal E-Commerce Recommendation AI System. The current architecture is local-first, evidence-first, and deliberately split into two independent dataset tracks.
 
-No model or Application Programming Interface (API) implementation is claimed as complete in this document. Baseline implementation remains gated by approved data contracts and evaluation protocols.
+Local baseline and bounded similarity implementations exist. No Application Programming Interface (API), deployment service, monitoring platform, or production operation is claimed as complete in this document.
 
 ## 2. Architecture Principles
 
@@ -29,12 +29,13 @@ Raw RetailRocket CSVs
 
 Track B: Amazon ABO Text/Image Similarity
 ABO listings and image archives
-  -> Safe archive inspection and controlled extraction planning
-  -> Canonical product schema
+  -> Safe archive inspection and controlled extraction
+  -> Cleaned product schema
   -> Product-to-image mapping
   -> Text metadata similarity baseline
-  -> Later image similarity baseline
-  -> ABO evaluation
+  -> RGB histogram image similarity baseline
+  -> CLIP text-image similarity experiment
+  -> ABO proxy evaluation
 ```
 
 The tracks remain independent. Their outputs may be presented as separate capabilities later, but their identifiers must not be joined or treated as shared.
@@ -56,7 +57,7 @@ Large CSV files must use header-only reads, streaming line counts, or chunked pr
 
 ### 4.3 Canonical Interaction Schema
 
-A future adapter should map discovered event rows into a documented interaction contract while preserving source fields and provenance. Core discovered source fields are:
+RetailRocket loading and validation should preserve discovered source fields and provenance. Core discovered source fields are:
 
 ```text
 timestamp, visitorid, event, itemid, transactionid
@@ -70,7 +71,7 @@ Behavior evaluation requires temporal train, validation, and test boundaries. Sp
 
 ### 4.5 Baseline Direction
 
-The first candidate is an event-weighted recent popularity recommender. Exact weights, recency windows, and fallback behavior remain provisional until the RetailRocket evaluation protocol is approved.
+The current local baseline is an event-weighted popularity recommender. Exact weights remain baseline evidence rather than optimized business policy.
 
 ## 5. Track B: Amazon ABO Pipeline
 
@@ -84,18 +85,18 @@ ABO raw files are stored under `data/raw/amazon_berkeley_text_images-based/`:
 
 ### 5.2 Safe Archive Inspection and Extraction Planning
 
-Archive processing must use bounded `tarfile` inspection or explicitly approved controlled extraction. The project must not extract all images or process all image content during discovery work.
+Archive processing must use bounded `tarfile` inspection or explicitly approved controlled extraction. The project must not extract all images or process all image content during routine evidence-hardening work.
 
 ### 5.3 Canonical Product Schema
 
-A future ABO adapter should normalize approved listing fields such as:
+The ABO cleaning workflow normalizes approved listing fields such as:
 
 ```text
 item_id, item_name, brand, bullet_point, product_type,
 color, material, style, main_image_id, other_image_id
 ```
 
-Field availability can vary by listing and locale, so canonicalization must define optional fields deliberately.
+Field availability can vary by listing and locale, so canonicalization defines optional fields deliberately and should remain documented in reports.
 
 ### 5.4 Product-to-Image Mapping
 
@@ -109,7 +110,7 @@ This mapping belongs only to ABO. It must never be used as a bridge to RetailRoc
 
 ### 5.5 Baseline Direction
 
-The initial candidate is text metadata similarity. Image similarity is a later controlled baseline or extension after the metadata path is evaluated.
+The current local ABO methods include TF-IDF text similarity, RGB histogram image similarity, and CLIP text-image similarity. The current proxy evidence is bounded and should be expanded through multi-query evaluation before Delivery-stage design.
 
 ## 6. No Dataset Merge Rule
 
@@ -144,7 +145,7 @@ The API must keep dataset provenance explicit and must not imply unsupported cro
 
 ## 9. Future Multimodal Extension Path
 
-The ABO track may progress from metadata similarity to image similarity and then to evaluated text-image retrieval or multimodal ranking. Any added method must be compared with the corresponding ABO baseline under the same protocol.
+The ABO track has progressed from metadata similarity to image similarity and a bounded CLIP text-image experiment. Any future method must be compared with the corresponding ABO baseline under the same protocol.
 
 ## 10. Future Enterprise Architecture Path
 

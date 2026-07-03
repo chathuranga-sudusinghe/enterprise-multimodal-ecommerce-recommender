@@ -4,7 +4,7 @@
 
 This document defines the evaluation direction for the Enterprise Multimodal E-Commerce Recommendation AI System. RetailRocket and Amazon Berkeley Objects (ABO) solve different recommendation tasks and must be evaluated separately.
 
-No evaluation results are claimed in this document. Baseline implementation remains paused until task definitions, fixture contracts, split rules, metrics, and validation protocols are approved.
+Local baseline and proxy evaluation artifacts now exist. Current Evaluation maturity remains partial because ABO evidence is one bounded proxy query and RetailRocket evidence covers a global popularity baseline only.
 
 ## 2. Evaluation Principles
 
@@ -23,7 +23,7 @@ Evaluate top-K item recommendation from observed visitor behavior signals. The p
 
 ### 3.2 Temporal Split
 
-Use a temporal train, validation, and test split. Exact cutoff timestamps must be approved before implementation.
+Use a temporal train/test split for the current local baseline evaluation and preserve leakage controls for future train/validation/test expansion.
 
 ```text
 Past interactions -> training window
@@ -38,9 +38,9 @@ Latest interactions -> test window
 - Keep test data isolated until the protocol is finalized.
 - Prevent item-property snapshots from leaking later information into earlier decisions.
 
-### 3.4 Baseline Candidate
+### 3.4 Current Baseline
 
-The initial candidate is an event-weighted recent popularity recommender. Event weights remain provisional until protocol approval. The protocol should document weight selection, recency windows, fallback rules, and tie-breaking behavior.
+The implemented local baseline is an event-weighted global popularity recommender. Event weights remain baseline evidence rather than optimized business policy. Future work should document weight selection, recency windows, fallback rules, and tie-breaking behavior before stronger claims.
 
 ### 3.5 Candidate Metrics
 
@@ -60,9 +60,9 @@ Optional later metrics may include diversity, novelty, and segment-level diagnos
 
 Evaluate product-to-product similarity retrieval from ABO catalog metadata, followed later by image-based similarity retrieval. The protocol should define query products, candidate products, eligibility filters, and relevance checks.
 
-### 4.2 Baseline Candidate
+### 4.2 Current ABO Methods
 
-The first ABO candidate is metadata/text content similarity using approved listing fields. A later image-similarity baseline or extension may use controlled image features after the text path is stable.
+The current ABO methods are TF-IDF metadata/text similarity, RGB histogram image similarity, and CLIP text-image similarity. The current proxy comparison is preliminary and should be expanded using `docs/reports/abo_multi_query_proxy_evaluation_design.md`.
 
 ### 4.3 Candidate Metrics
 
@@ -74,7 +74,7 @@ The first ABO candidate is metadata/text content similarity using approved listi
 | Coverage | Measures how much of the eligible ABO catalog participates in retrieval |
 | Latency | Measures similar-product retrieval time under a defined local setup |
 
-Image-text retrieval quality may be added later if multimodal experiments are approved.
+CLIP image-text retrieval quality should remain bounded and proxy-labeled until broader evaluation exists.
 
 ## 5. No Combined Cross-Dataset Metric
 
@@ -143,12 +143,13 @@ Potential later evaluation areas include:
 
 ## 11. Evaluation Acceptance Criteria
 
-The evaluation plan is ready for implementation when:
+Evaluation evidence is ready to support Delivery-stage design only when:
 
-1. RetailRocket and ABO tasks are approved separately.
+1. RetailRocket and ABO tasks are documented separately.
 2. RetailRocket temporal split rules and leakage controls are explicit.
-3. RetailRocket provisional event-weight selection is documented without premature locking.
+3. RetailRocket event-weight assumptions are documented without claiming optimization.
 4. ABO query, candidate, and relevance rules are explicit.
-5. Track-specific metrics are approved.
-6. No combined cross-dataset metric is used.
-7. Baseline comparison gates are clear.
+5. ABO proxy evaluation covers multiple representative queries.
+6. Track-specific metrics are reported with limitations.
+7. No combined cross-dataset metric is used.
+8. Baseline comparison gates are clear.
