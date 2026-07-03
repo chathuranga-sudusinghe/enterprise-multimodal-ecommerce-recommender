@@ -40,14 +40,7 @@ Accepted changes should be reviewed through:
 - Documentation review for accuracy, scope, and evidence alignment.
 - Small branch-based changes where applicable.
 
-The latest verified test evidence recorded by the current project status report is:
-
-```text
-TMPDIR=/tmp .venv/bin/python -m pytest -q
-99 passed in 14.97s
-```
-
-This result is repository test evidence, not certification of production readiness.
+The exact passing test count can change as tests are added. Current test status should be verified with `python -m pytest -q` in the active environment. Test results are repository quality evidence, not certification of production readiness.
 
 ## Security, Privacy, and Governance
 

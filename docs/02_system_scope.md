@@ -6,13 +6,13 @@ This document defines the current and future boundaries of the Enterprise Multim
 
 ## 2. Current Project Scope
 
-The current phase is discovery-first and baseline-evidence-first. It covers documentation restructuring, deterministic fixture contracts, safe adapters, validation planning, and separate evaluation protocol design.
+The current active milestone is Data and Evaluation Evidence Hardening. It builds on completed local discovery, deterministic fixtures, safe adapters, validators, baseline implementations, and partial evaluation evidence.
 
 The system currently targets:
 
 - Behavior-based recommendation from RetailRocket events.
 - Product text-based similarity from Amazon Berkeley Objects (ABO) listings.
-- Product image-based similarity from ABO catalog images in a later controlled step.
+- Product image-based and CLIP-based similarity from ABO catalog images in controlled local experiments.
 
 Video recommendation is excluded from the current scope.
 
@@ -27,7 +27,7 @@ RetailRocket data is stored under `data/raw/RetailRocket_event-based/`.
 | `item_properties_part2.csv` | Timestamped item-property records |
 | `category_tree.csv` | Category hierarchy |
 
-The initial baseline candidate is an event-weighted recent popularity recommender. Its exact event weights, recency policy, split protocol, and metrics require approval before implementation.
+The implemented local baseline is an event-weighted global popularity recommender. Its current weights remain baseline evidence rather than optimized business policy.
 
 ## 4. Track B: Amazon ABO Text/Image Product Similarity
 
@@ -39,7 +39,7 @@ ABO data is stored under `data/raw/amazon_berkeley_text_images-based/`.
 | `abo-images-small.tar` | Small catalog images and image metadata |
 | `README.md` | Dataset description and license notes |
 
-The first baseline candidate is metadata/text-based product similarity. Image-similarity work follows later as a separately evaluated extension.
+The implemented local baselines include metadata/text TF-IDF similarity and RGB histogram image similarity. CLIP text-image similarity is implemented as a bounded ABO experiment with partial proxy evaluation evidence.
 
 ## 5. In-Scope Items
 
@@ -48,9 +48,10 @@ The first baseline candidate is metadata/text-based product similarity. Image-si
 - Tiny deterministic fixtures for tests, examples, and CI.
 - Track-specific canonical schemas.
 - Safe raw-data adapters and validation.
-- Separate baseline planning.
-- Separate evaluation protocols.
+- Separate baseline implementations and reports.
+- Separate evaluation protocols and evidence hardening.
 - Local-first engineering workflows.
+- Basic GitHub Actions pytest quality gate for pull requests and pushes to `dev` and `main`.
 
 ## 6. Out-of-Scope Items
 
@@ -61,11 +62,10 @@ The current phase excludes:
 - The old synthetic `products.csv`, `users.csv`, and `events.csv` design as the primary dataset.
 - Video, spin, 360-degree, or 3D recommendation.
 - API implementation.
-- Model training before protocol approval.
-- Hardcoded RetailRocket event weights before protocol approval.
+- New model-family implementation during the evidence-hardening milestone.
 - RAG implementation.
-- Agentic workflows.
-- MCP integration.
+- Production agentic workflows.
+- Production MCP server/client integration.
 - Contextual bandits.
 - Cloud deployment and Kubernetes.
 
@@ -90,9 +90,9 @@ Future extensions must preserve provenance and must not fabricate identity mappi
 | Fixture contracts | Tiny deterministic track-specific examples |
 | Data adapters | Safe RetailRocket CSV and ABO archive readers |
 | Validation | Track-specific schema and relationship checks |
-| Feature preparation | Defined only after protocol approval |
-| Baselines | Separate RetailRocket and ABO implementations later |
-| Evaluation | Separate leakage-aware protocols and reports |
+| Feature preparation | Local bounded preparation exists for current baseline and CLIP-ready ABO workflows |
+| Baselines | Separate RetailRocket and ABO baselines implemented locally |
+| Evaluation | Separate leakage-aware protocols, local outputs, and evidence-hardening reports |
 | API service | Future layer after baseline evidence |
 | Monitoring and governance | Incremental controls as the system matures |
 
@@ -104,11 +104,12 @@ RetailRocket identifiers belong only to RetailRocket. ABO listing and image iden
 
 ## 10. Model Scope
 
-No new model implementation should start during documentation restructuring. After approval:
+No new model-family implementation should start during the current evidence-hardening milestone. Current local methods are:
 
-- RetailRocket may begin with event-weighted recent popularity.
-- ABO may begin with metadata/text product similarity.
-- ABO image similarity may follow as a controlled extension.
+- RetailRocket event-weighted popularity.
+- ABO TF-IDF text similarity.
+- ABO RGB histogram image similarity.
+- ABO CLIP text-image similarity as a bounded experiment.
 
 Advanced methods must outperform the corresponding baseline under the same task and protocol before improvement is claimed.
 

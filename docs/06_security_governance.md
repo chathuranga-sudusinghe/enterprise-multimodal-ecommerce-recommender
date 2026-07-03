@@ -107,7 +107,7 @@ Fallback behavior must be track-specific, observable, and documented before API 
 
 ## 11. Future RAG, Agent, and MCP Governance
 
-Retrieval-Augmented Generation (RAG), agentic workflows, and Model Context Protocol (MCP) integrations are out of scope for the current phase. If introduced later, they require:
+Retrieval-Augmented Generation (RAG), production agentic workflows, and production Model Context Protocol (MCP) integrations are out of scope for the current milestone. The repository includes a lightweight local orchestration demo and MCP-style helper boundaries, but these are not a production agent system or full MCP server/client. If production-grade versions are introduced later, they require:
 
 - Explicit business justification.
 - Restricted tool access.
@@ -125,7 +125,7 @@ Retrieval-Augmented Generation (RAG), agentic workflows, and Model Context Proto
 - ABO metadata fields vary by listing and locale.
 - ABO image mappings require controlled validation.
 - The current project does not include video recommendation.
-- Current documentation defines direction; it does not claim deployed security controls or implemented recommendation services.
+- Current documentation and local tests define direction and local evidence; they do not claim deployed security controls or implemented recommendation services.
 
 ## 13. Security and Governance Acceptance Criteria
 

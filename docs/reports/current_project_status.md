@@ -9,7 +9,7 @@ This repository is a local, production-oriented recommendation engineering proje
 
 It has progressed beyond discovery and planning. Implemented work includes track-specific fixtures and validation, bounded real-data preparation, RetailRocket and ABO baselines, CLIP multimodal similarity, offline/proxy evaluation, and a lightweight local orchestration demo.
 
-It is not production deployed. There is no implemented API, service deployment, monitoring platform, CI/CD workflow, vector database, full MCP server/client, or autonomous agent runtime. Current evidence supports local engineering maturity and testability, not online recommendation quality or operational readiness.
+It is not production deployed. There is no implemented API, service deployment, monitoring platform, vector database, full MCP server/client, or autonomous agent runtime. A basic GitHub Actions workflow exists as a pull-request and branch test quality gate only; it is not deployment or production CI/CD. Current evidence supports local engineering maturity and testability, not online recommendation quality or operational readiness.
 
 Lifecycle used in this assessment:
 
@@ -25,6 +25,7 @@ Problem -> Data -> Baseline -> Advanced AI -> Evaluation -> Delivery -> Producti
 |-- AGENTS.md
 |-- pyproject.toml
 |-- requirements.txt
+|-- .github/workflows/ci.yml        # Basic pytest quality gate only
 |-- configs/                         # Present; no substantive tracked config
 |-- data/
 |   |-- raw/                         # Local real datasets; ignored
@@ -201,7 +202,7 @@ These are not a full MCP or autonomous-agent implementation:
 
 Accurate description: **lightweight deterministic local orchestration with MCP-style tool boundaries**.
 
-## 7. Existing Tests and Test Coverage Summary
+## 7. Existing Tests, CI, and Test Coverage Summary
 
 Tests cover:
 
@@ -213,20 +214,15 @@ Tests cover:
 - ABO proxy metrics.
 - MCP-style helpers, policy checks, agents, fallback, mocked OpenAI path, and orchestration.
 
-Verified during this audit:
-
-```text
-TMPDIR=/tmp .venv/bin/python -m pytest -q
-99 passed in 14.97s
-```
+The exact passing test count may change as tests are added. The current source of truth is the output of `python -m pytest -q` in the active environment.
 
 Limitations:
 
 - No line or branch coverage percentage is configured.
 - Tests are unit-focused; no formal integration, end-to-end, load, security, or deployment suite exists.
-- Real raw-data workflows are not comprehensively exercised in CI.
+- Real raw-data workflows are not comprehensively exercised in the basic GitHub Actions quality gate.
 - Real CLIP environment/cache integration remains separate from mocked unit coverage.
-- README says 90 tests, which is stale relative to the verified 99.
+- CI installs `requirements.txt` and runs `python -m pytest -q`; it does not deploy, build containers, monitor services, or operate production infrastructure.
 
 ## 8. Existing Documentation Summary
 
@@ -234,7 +230,7 @@ Strong evidence documents include the two dataset discovery reports, discovery s
 
 The seven core lifecycle docs provide good discovery-first and evidence-gated principles. However, several still describe baselines, image similarity, agents, MCP, and advanced AI as future work even though local implementations now exist.
 
-README is the most current overview. It correctly states that the project is local and not deployed, but its test count is stale and advanced-model results need stronger bounded-proxy qualification.
+README is the most current overview. It correctly states that the project is local and not deployed, avoids hardcoded current test counts, and qualifies the ABO proxy results as bounded evidence.
 
 The previous status report was stale: it reported 42 tests and said ABO image similarity, agentic workflows, and MCP-style components were not implemented. This report replaces that snapshot.
 
@@ -245,6 +241,7 @@ The previous status report was stale: it reported 42 tests and said ABO image si
 - Explicit production users, surfaces, business thresholds, and service-level objectives.
 - Versioned processed-data contracts and lineage metadata.
 - Automated real-data quality reports and artifact manifests/checksums.
+- Reviewed processed-artifact manifest evidence beyond the current local manifest.
 
 ### Evaluation
 
@@ -258,7 +255,7 @@ The previous status report was stale: it reported 42 tests and said ABO image si
 - FastAPI or another serving API.
 - Persisted retrieval index/vector database.
 - Authentication, authorization, rate limiting, and service contracts.
-- Docker, CI/CD, cloud, or Kubernetes implementation.
+- Docker, deployment CI/CD, cloud, or Kubernetes implementation.
 - Monitoring, drift detection, alerting, dashboards, and incident runbooks.
 - Model registry, promotion, rollback automation, and maintenance ownership.
 
