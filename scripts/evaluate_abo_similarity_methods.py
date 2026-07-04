@@ -8,7 +8,7 @@ import logging
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Sequence
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = PROJECT_ROOT / "src"
@@ -17,7 +17,7 @@ for import_root in (PROJECT_ROOT, SRC_ROOT):
         sys.path.insert(0, str(import_root))
 
 from ecommerce_recommender.evaluation.abo_proxy_similarity import (  # noqa: E402
-    evaluate_method_output,
+    evaluate_multi_query_method_output,
     load_method_output,
     load_product_lookup,
 )
@@ -48,28 +48,38 @@ def run_evaluation(
 ) -> dict[str, object]:
     """Evaluate all available method outputs and write one comparison artifact."""
     product_lookup = load_product_lookup(products_path)
-    metrics_by_method: dict[str, dict[str, object]] = {}
+    metrics_by_method: dict[str, dict[str, Any]] = {}
 
     for method_label, method_path in method_paths.items():
         if not method_path.is_file():
             LOGGER.warning("Skipping missing %s output: %s", method_label, method_path)
             continue
-        metrics_by_method[method_label] = evaluate_method_output(
+        metrics_by_method[method_label] = evaluate_multi_query_method_output(
             load_method_output(method_path),
             product_lookup,
             method_name=method_label,
         )
 
+    has_multi_query = any(
+        metrics.get("evaluation_scope") == "multi_query"
+        for metrics in metrics_by_method.values()
+    )
     result: dict[str, object] = {
         "evaluation_name": "ABO similarity method proxy comparison",
         "evaluation_type": "proxy_similarity_evaluation",
+        "evaluation_scope": "multi_query" if has_multi_query else "single_query",
         "dataset_track": "amazon_berkeley_text_images-based",
         "products_file": _display_path(products_path),
         "evaluated_methods": list(metrics_by_method),
+        "query_result_scope_by_method": {
+            method: metrics.get("evaluation_scope", "single_query")
+            for method, metrics in metrics_by_method.items()
+        },
         "metrics_by_method": metrics_by_method,
         "assumptions": [
             "ABO has no real user behavior labels.",
             "Product type match is used as binary proxy relevance.",
+            "Multi-query results are metadata proxy evidence, not user satisfaction evidence.",
             "Results must not be interpreted as real click or purchase recommendation performance.",
         ],
         "limitations": [
@@ -84,14 +94,25 @@ def run_evaluation(
     return result
 
 
-def log_summary(metrics_by_method: dict[str, dict[str, object]]) -> None:
+def log_summary(metrics_by_method: dict[str, dict[str, Any]]) -> None:
     """Log a compact comparison table without adding a table dependency."""
-    LOGGER.info("%-10s %6s %10s %10s %10s", "method", "eval", "type_rate", "precision", "ndcg")
+    LOGGER.info("%-10s %8s %10s %10s %10s", "method", "queries", "type_rate", "precision", "ndcg")
     for method, metrics in metrics_by_method.items():
+        if metrics.get("evaluation_scope") == "multi_query":
+            aggregate = metrics["aggregate_metrics"]
+            LOGGER.info(
+                "%-10s %8d %10.3f %10.3f %10.3f",
+                method,
+                metrics["evaluated_query_count"],
+                _mean_or_zero(aggregate["product_type_match_rate_at_k"]),
+                _mean_or_zero(aggregate["proxy_precision_at_k"]),
+                _mean_or_zero(aggregate["proxy_ndcg_at_k"]),
+            )
+            continue
         LOGGER.info(
-            "%-10s %6d %10.3f %10.3f %10.3f",
+            "%-10s %8d %10.3f %10.3f %10.3f",
             method,
-            metrics["recommendations_evaluated"],
+            1,
             metrics["product_type_match_rate_at_k"],
             metrics["proxy_precision_at_k"],
             metrics["proxy_ndcg_at_k"],
@@ -115,6 +136,10 @@ def _display_path(path: Path) -> str:
         return str(path.resolve().relative_to(PROJECT_ROOT))
     except ValueError:
         return str(path.resolve())
+
+
+def _mean_or_zero(summary: dict[str, float | None]) -> float:
+    return float(summary["mean"] or 0.0)
 
 
 if __name__ == "__main__":
