@@ -197,6 +197,7 @@ def evaluate_method_output(
     recommendation_count = len(ranked)
     return {
         "method_name": method_name or _text(method_output.get("method_name")) or "unknown",
+        "evaluation_scope": "single_query",
         "query_item_id": query_item_id,
         "products_loaded": method_output.get("products_loaded"),
         "recommendations_evaluated": recommendation_count,
@@ -276,6 +277,7 @@ def evaluate_multi_query_method_output(
         "evaluated_query_count": len(per_query_metrics),
         "query_failure_count": len(query_failures),
         "query_failures": query_failures,
+        "failed_query_item_ids": [failure["query_item_id"] for failure in query_failures],
         "query_item_ids": [metrics["query_item_id"] for metrics in per_query_metrics],
         "products_loaded": method_output.get("products_loaded"),
         "top_k_values": sorted({metrics["top_k"] for metrics in per_query_metrics}),
