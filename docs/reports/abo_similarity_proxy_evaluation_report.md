@@ -96,6 +96,158 @@ Generate proxy evaluation:
 python scripts/evaluate_abo_similarity_methods.py --products data/processed/abo_clean_products_5k.jsonl --tfidf data/processed/abo_tfidf_similarity_5k_sample.json --image data/processed/abo_image_similarity_5k_sample.json --clip data/processed/abo_clip_similarity_5k_sample.json --output data/processed/abo_similarity_proxy_evaluation.json
 ```
 
+## Pending Multi-Query Execution
+
+No real multi-query ABO proxy evaluation evidence has been generated in this workspace yet.
+
+Local inspection on this branch found these processed ABO artifacts:
+
+- `data/processed/abo_clean_products_5k.jsonl`
+- `data/processed/abo_tfidf_similarity_5k_sample.json`
+- `data/processed/abo_image_similarity_5k_sample.json`
+- `data/processed/abo_clip_similarity_5k_sample.json`
+- `data/processed/abo_similarity_proxy_evaluation.json`
+
+The existing TF-IDF, RGB histogram, and CLIP similarity artifacts are legacy one-query artifacts for `B07NQ437BB`. A search of local processed JSON outputs found `query_item_id` fields but no top-level `queries` payload for the three similarity methods. Therefore, aggregate multi-query metrics are pending and must not be reported as evidence yet.
+
+The first 25 deterministic eligible query IDs observed from `data/processed/abo_clean_products_5k.jsonl` are:
+
+```text
+B07NQ437BB
+B0857LSVB7
+B07C5FF8QS
+B07K591232
+B07TG425LX
+B07LCHFZCW
+B077W2YX72
+B07TH39LDF
+B07TG3WCBD
+B07T6TRYWH
+B0857LS1BM
+B07NPB6586
+B078GWXY1F
+B07NQ7LYKK
+B0011MZHAO
+B07T36HPN6
+B08CVBXDQ1
+B07TGBRVLM
+B07FZBTN3Y
+B08511NXH6
+B07C2BHFCN
+B07DBJQC1K
+B07TBV4WVY
+B073RM861Z
+B07XYDB216
+```
+
+Pending execution commands for WSL/Ubuntu Bash, using the existing single-query runners and the existing multi-query evaluator format:
+
+```bash
+queries=(
+  B07NQ437BB B0857LSVB7 B07C5FF8QS B07K591232 B07TG425LX
+  B07LCHFZCW B077W2YX72 B07TH39LDF B07TG3WCBD B07T6TRYWH
+  B0857LS1BM B07NPB6586 B078GWXY1F B07NQ7LYKK B0011MZHAO
+  B07T36HPN6 B08CVBXDQ1 B07TGBRVLM B07FZBTN3Y B08511NXH6
+  B07C2BHFCN B07DBJQC1K B07TBV4WVY B073RM861Z B07XYDB216
+)
+
+mkdir -p \
+  data/processed/abo_multi_query/tfidf \
+  data/processed/abo_multi_query/image \
+  data/processed/abo_multi_query/clip
+
+for query in "${queries[@]}"; do
+  python scripts/run_abo_text_baseline.py \
+    --input data/processed/abo_clean_products_5k.jsonl \
+    --max-products 100 \
+    --top-k 5 \
+    --query-item-id "$query" \
+    --output "data/processed/abo_multi_query/tfidf/${query}.json"
+
+  python scripts/run_abo_image_similarity.py \
+    --input data/processed/abo_clean_products_5k.jsonl \
+    --max-products 100 \
+    --top-k 5 \
+    --query-item-id "$query" \
+    --output "data/processed/abo_multi_query/image/${query}.json"
+
+  python scripts/run_abo_clip_similarity.py \
+    --input data/processed/abo_clean_products_5k.jsonl \
+    --max-products 100 \
+    --top-k 5 \
+    --query-item-id "$query" \
+    --local-files-only \
+    --output "data/processed/abo_multi_query/clip/${query}.json"
+done
+```
+
+After the per-query files exist, wrap each method directory into one top-level `queries` artifact:
+
+```bash
+python - <<'PY'
+import json
+from pathlib import Path
+
+specs = [
+    {
+        "directory": Path("data/processed/abo_multi_query/tfidf"),
+        "output": Path("data/processed/abo_tfidf_similarity_5k_multi_query.json"),
+        "drop_query_fields": {
+            "baseline_name", "method_name", "dataset_track", "method", "input_file",
+            "input_sample_path", "products_loaded", "assumptions", "limitations",
+            "generated_at_utc",
+        },
+        "drop_top_fields": {
+            "query_item_id", "source_product_id", "source_product_metadata",
+            "query_product", "recommendations",
+        },
+    },
+    {
+        "directory": Path("data/processed/abo_multi_query/image"),
+        "output": Path("data/processed/abo_image_similarity_5k_multi_query.json"),
+        "drop_query_fields": {"method_name", "input_file", "products_loaded"},
+        "drop_top_fields": {"query_item_id", "query_product", "recommendations"},
+    },
+    {
+        "directory": Path("data/processed/abo_multi_query/clip"),
+        "output": Path("data/processed/abo_clip_similarity_5k_multi_query.json"),
+        "drop_query_fields": {"method_name", "model_name", "input_file", "products_loaded"},
+        "drop_top_fields": {"query_item_id", "query_product", "recommendations"},
+    },
+]
+
+for spec in specs:
+    files = sorted(spec["directory"].glob("*.json"))
+    if not files:
+        raise FileNotFoundError(f"No per-query files found in {spec['directory']}")
+    first = json.loads(files[0].read_text(encoding="utf-8"))
+    queries = []
+    for path in files:
+        query = json.loads(path.read_text(encoding="utf-8"))
+        for field in spec["drop_query_fields"]:
+            query.pop(field, None)
+        queries.append(query)
+    output = {key: value for key, value in first.items() if key not in spec["drop_top_fields"]}
+    output["queries"] = queries
+    spec["output"].write_text(json.dumps(output, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+```
+
+Then run the proxy evaluation:
+
+```bash
+python scripts/evaluate_abo_similarity_methods.py \
+  --products data/processed/abo_clean_products_5k.jsonl \
+  --tfidf data/processed/abo_tfidf_similarity_5k_multi_query.json \
+  --image data/processed/abo_image_similarity_5k_multi_query.json \
+  --clip data/processed/abo_clip_similarity_5k_multi_query.json \
+  --output data/processed/abo_similarity_proxy_evaluation_multi_query.json
+```
+
+PowerShell can still be used on Windows if needed, but the canonical pending commands for this report are the Bash commands above.
+
+If CLIP cannot run because PyTorch, Transformers, Pillow, or the local Hugging Face cache is unavailable, record the failure explicitly and do not compare CLIP aggregate metrics for the missing method.
+
 ## Limitations
 
 - The evidence covers one query only.
