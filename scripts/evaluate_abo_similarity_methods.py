@@ -71,6 +71,10 @@ def run_evaluation(
         "dataset_track": "amazon_berkeley_text_images-based",
         "products_file": _display_path(products_path),
         "evaluated_methods": list(metrics_by_method),
+        "query_result_scope_by_method": {
+            method: metrics.get("evaluation_scope", "single_query")
+            for method, metrics in metrics_by_method.items()
+        },
         "metrics_by_method": metrics_by_method,
         "assumptions": [
             "ABO has no real user behavior labels.",

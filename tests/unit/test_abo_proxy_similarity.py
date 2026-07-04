@@ -120,6 +120,9 @@ def test_evaluation_result_structure(tmp_path: Path) -> None:
     assert result["dataset_track"] == "amazon_berkeley_text_images-based"
     assert result["evaluated_methods"] == ["tfidf"]
     assert "tfidf" in result["metrics_by_method"]
+    assert result["evaluation_scope"] == "single_query"
+    assert result["query_result_scope_by_method"] == {"tfidf": "single_query"}
+    assert result["metrics_by_method"]["tfidf"]["evaluation_scope"] == "single_query"
     assert result["assumptions"]
     assert result["limitations"]
     assert json.loads(output_path.read_text(encoding="utf-8")) == result
@@ -211,6 +214,7 @@ def test_multi_query_method_output_reports_query_failures() -> None:
     assert metrics["query_count"] == 2
     assert metrics["evaluated_query_count"] == 1
     assert metrics["query_failure_count"] == 1
+    assert metrics["failed_query_item_ids"] == ["missing-query"]
     assert metrics["query_failures"] == [
         {
             "query_item_id": "missing-query",
@@ -250,6 +254,7 @@ def test_run_evaluation_accepts_multi_query_method_artifact(tmp_path: Path) -> N
     )
 
     assert result["evaluation_scope"] == "multi_query"
+    assert result["query_result_scope_by_method"] == {"tfidf": "multi_query"}
     assert result["metrics_by_method"]["tfidf"]["evaluated_query_count"] == 2
     assert result["metrics_by_method"]["tfidf"]["aggregate_metrics"]["proxy_precision_at_k"]["mean"] == pytest.approx(0.5)
     assert json.loads(output_path.read_text(encoding="utf-8")) == result
@@ -267,3 +272,35 @@ def test_self_and_duplicate_recommendations_are_reported() -> None:
     assert metrics["self_recommendation_count"] == 1
     assert metrics["duplicate_recommendation_count"] == 1
     assert metrics["duplicate_recommendation_item_ids"] == ["both"]
+
+
+def test_multi_query_aggregates_self_and_duplicate_recommendations() -> None:
+    output = {
+        "method_name": "fixture_similarity",
+        "products_loaded": 4,
+        "top_k": 3,
+        "queries": [
+            {
+                "query_item_id": "query",
+                "recommendations": [
+                    {"item_id": "query", "score": 1.0},
+                    {"item_id": "both", "score": 0.9},
+                    {"item_id": "both", "score": 0.8},
+                ],
+            },
+            {
+                "query_item_id": "both",
+                "recommendations": [
+                    {"item_id": "query", "score": 0.7},
+                    {"item_id": "same-type", "score": 0.6},
+                ],
+            },
+        ],
+    }
+
+    metrics = evaluate_multi_query_method_output(output, _products())
+
+    assert metrics["self_recommendation_count"] == 1
+    assert metrics["duplicate_recommendation_count"] == 1
+    assert metrics["per_query_metrics"][0]["self_recommendation_count"] == 1
+    assert metrics["per_query_metrics"][0]["duplicate_recommendation_item_ids"] == ["both"]
