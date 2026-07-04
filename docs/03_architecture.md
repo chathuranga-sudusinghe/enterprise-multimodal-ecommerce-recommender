@@ -1,8 +1,10 @@
-# Architecture
+# Current Local Architecture Direction
 
 ## 1. Purpose
 
-This document defines the architecture direction for the Enterprise Multimodal E-Commerce Recommendation AI System. The current architecture is local-first, evidence-first, and deliberately split into two independent dataset tracks.
+This document defines the current local architecture direction for the Enterprise Multimodal E-Commerce Recommendation AI System. It describes the local-first, evidence-first architecture used during the current data, baseline, and evaluation hardening phases.
+
+The final target enterprise architecture is defined separately in `docs/architecture/final_enterprise_architecture_target.md`. That document describes future enterprise layers and the long-term system vision; this document describes the current local direction and near-term architecture boundaries.
 
 Local baseline and bounded similarity implementations exist. No Application Programming Interface (API), deployment service, monitoring platform, or production operation is claimed as complete in this document.
 
