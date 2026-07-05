@@ -1,4 +1,4 @@
-import csv
+﻿import csv
 import gzip
 import io
 import json
@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from ecommerce_recommender.data.clean_abo_products import (
     clean_abo_products,
     flatten_multilingual_text,
+    normalize_metadata_value,
     write_clean_products_jsonl,
 )
 
@@ -36,6 +37,7 @@ def _listing(item_id: str = "item-1", image_id: str = "image-1") -> dict[str, ob
         "material": _multilingual("Ceramic"),
         "style": _multilingual("Modern"),
         "main_image_id": image_id,
+        "other_image_id": ["image-2", "image-3"],
     }
 
 
@@ -107,6 +109,11 @@ def test_flatten_multilingual_text_falls_back_to_first_valid_value() -> None:
     assert flatten_multilingual_text(value) == "Assiette"
 
 
+def test_normalize_metadata_value_is_lowercase_and_whitespace_stable() -> None:
+    assert normalize_metadata_value("  Dinner   Plate  ") == "dinner plate"
+    assert normalize_metadata_value(None) == ""
+
+
 def test_builds_combined_text_from_required_and_optional_fields(tmp_path: Path) -> None:
     listings_tar, images_tar = _write_tar_fixtures(tmp_path, [_listing()])
 
@@ -116,6 +123,7 @@ def test_builds_combined_text_from_required_and_optional_fields(tmp_path: Path) 
         "Ceramic Plate Table Home DINNER_PLATE Dishwasher safe Set of four "
         "White Ceramic Modern"
     )
+    assert records[0]["combined_text_length"] == len(records[0]["combined_text"])
 
 
 def test_maps_main_image_id_to_resolved_tar_path(tmp_path: Path) -> None:
@@ -124,7 +132,9 @@ def test_maps_main_image_id_to_resolved_tar_path(tmp_path: Path) -> None:
     records, summary = clean_abo_products(listings_tar, images_tar)
 
     assert records[0]["image_path"] == "images/small/00/image-1.jpg"
+    assert records[0]["image_mapping_status"] == "mapped"
     assert summary.records_written == 1
+    assert summary.mapped_image_count == 1
 
 
 def test_drops_record_when_main_image_id_does_not_map(tmp_path: Path) -> None:
@@ -137,16 +147,44 @@ def test_drops_record_when_main_image_id_does_not_map(tmp_path: Path) -> None:
 
     assert records == []
     assert summary.dropped_missing_image == 1
+    assert summary.records_written == 0
 
 
-def test_drops_record_when_required_text_is_missing(tmp_path: Path) -> None:
+def test_keeps_record_when_optional_brand_is_missing_but_text_is_usable(tmp_path: Path) -> None:
     listing = _listing()
     listing["brand"] = []
     listings_tar, images_tar = _write_tar_fixtures(tmp_path, [listing])
 
     records, summary = clean_abo_products(listings_tar, images_tar)
 
+    assert len(records) == 1
+    assert records[0]["brand"] == ""
+    assert records[0]["normalized_brand"] == ""
+    assert records[0]["has_usable_text"] is True
+    assert summary.dropped_missing_required_text == 0
+
+
+def test_drops_record_when_item_id_is_missing(tmp_path: Path) -> None:
+    listing = _listing(item_id="")
+    listings_tar, images_tar = _write_tar_fixtures(tmp_path, [listing])
+
+    records, summary = clean_abo_products(listings_tar, images_tar)
+
     assert records == []
+    assert summary.dropped_missing_item_id == 1
+    assert summary.dropped_missing_required_text == 1
+
+
+def test_drops_record_when_all_text_fields_are_missing(tmp_path: Path) -> None:
+    listing = _listing()
+    for field in ("item_name", "brand", "product_type", "bullet_point", "color", "material", "style"):
+        listing[field] = []
+    listings_tar, images_tar = _write_tar_fixtures(tmp_path, [listing])
+
+    records, summary = clean_abo_products(listings_tar, images_tar)
+
+    assert records == []
+    assert summary.dropped_unusable_text == 1
     assert summary.dropped_missing_required_text == 1
 
 
@@ -163,6 +201,22 @@ def test_deduplicates_item_id_and_keeps_first_valid_record(tmp_path: Path) -> No
     assert summary.duplicate_item_ids_dropped == 1
 
 
+def test_marks_missing_product_type_as_not_evaluation_ready(tmp_path: Path) -> None:
+    listing = _listing()
+    listing["product_type"] = []
+    listings_tar, images_tar = _write_tar_fixtures(tmp_path, [listing])
+
+    records, summary = clean_abo_products(listings_tar, images_tar)
+
+    assert len(records) == 1
+    assert records[0]["product_type"] == ""
+    assert records[0]["normalized_product_type"] == ""
+    assert records[0]["is_clip_ready"] is True
+    assert records[0]["is_evaluation_ready"] is False
+    assert summary.missing_product_type == 1
+    assert summary.evaluation_ready_count == 0
+
+
 def test_writes_clip_ready_jsonl_with_expected_fields(tmp_path: Path) -> None:
     listings_tar, images_tar = _write_tar_fixtures(tmp_path, [_listing()])
     records, summary = clean_abo_products(listings_tar, images_tar)
@@ -175,11 +229,18 @@ def test_writes_clip_ready_jsonl_with_expected_fields(tmp_path: Path) -> None:
     assert summary.to_dict() == {
         "records_scanned": 1,
         "records_written": 1,
+        "dropped_missing_item_id": 0,
+        "dropped_unusable_text": 0,
         "dropped_missing_required_text": 0,
         "dropped_missing_image": 0,
         "duplicate_item_ids_dropped": 0,
+        "missing_product_type": 0,
+        "usable_text_count": 1,
+        "mapped_image_count": 1,
+        "clip_ready_count": 1,
+        "evaluation_ready_count": 1,
     }
-    assert set(saved_record) == {
+    expected_backward_compatible_fields = {
         "item_id",
         "item_name",
         "brand",
@@ -190,9 +251,31 @@ def test_writes_clip_ready_jsonl_with_expected_fields(tmp_path: Path) -> None:
         "style",
         "combined_text",
         "main_image_id",
+        "other_image_id",
         "image_path",
         "has_usable_text",
         "has_usable_image",
         "is_clip_ready",
     }
+    expected_contract_fields = {
+        "combined_text_length",
+        "normalized_product_type",
+        "normalized_brand",
+        "normalized_color",
+        "is_evaluation_ready",
+        "metadata_field_count",
+        "source_dataset",
+        "image_mapping_status",
+        "cleaning_status",
+    }
+    assert expected_backward_compatible_fields.issubset(saved_record)
+    assert expected_contract_fields.issubset(saved_record)
     assert saved_record["is_clip_ready"] is True
+    assert saved_record["is_evaluation_ready"] is True
+    assert saved_record["normalized_product_type"] == "dinner_plate"
+    assert saved_record["normalized_brand"] == "table home"
+    assert saved_record["normalized_color"] == "white"
+    assert saved_record["metadata_field_count"] == 9
+    assert saved_record["source_dataset"] == "amazon_berkeley_objects"
+    assert saved_record["image_mapping_status"] == "mapped"
+    assert saved_record["cleaning_status"] == "written"

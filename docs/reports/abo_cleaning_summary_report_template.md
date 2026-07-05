@@ -1,4 +1,4 @@
-# ABO Cleaning Summary Report Template
+﻿# ABO Cleaning Summary Report Template
 
 ## Purpose
 
@@ -8,7 +8,7 @@ This template defines the required fields for a future actual ABO cleaning summa
 
 | Field | Value |
 |---|---|
-| Command | `TODO` |
+| Command | `python scripts/clean_abo_products.py --max-records 1000 --output data/processed/abo_clean_products_sample.jsonl` |
 | Generated at UTC | `TODO` |
 | Code version or commit | `TODO` |
 | Operator or environment | `TODO` |

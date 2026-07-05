@@ -8,7 +8,7 @@ This is local validation evidence, not production monitoring.
 
 ## Run Context
 
-- Generated at UTC: `2026-07-04T15:38:50Z`
+- Generated at UTC: `2026-07-05T00:30:47Z`
 - Processed directory: `data/processed`
 - Validator: `scripts/validate_processed_data.py`
 
@@ -26,7 +26,7 @@ This is local validation evidence, not production monitoring.
 | File | Type | Status | Summary |
 |---|---|---|---|
 | `data/processed/abo_clean_products_5k.jsonl` | ABO cleaned JSONL | PASS | Validated 4971 cleaned ABO product records. |
-| `data/processed/abo_clean_products_sample.jsonl` | ABO cleaned JSONL | PASS | Validated 992 cleaned ABO product records. |
+| `data/processed/abo_clean_products_sample.jsonl` | ABO cleaned JSONL | PASS | Validated 993 cleaned ABO product records. |
 | `data/processed/abo_tfidf_similarity_5k_sample.json` | ABO similarity JSON | PASS | Validated 5 similarity recommendations. |
 | `data/processed/abo_image_similarity_5k_sample.json` | ABO similarity JSON | PASS | Validated 5 similarity recommendations. |
 | `data/processed/abo_clip_similarity_5k_sample.json` | ABO similarity JSON | PASS | Validated 5 similarity recommendations. |
