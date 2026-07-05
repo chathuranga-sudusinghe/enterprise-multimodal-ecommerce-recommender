@@ -1,4 +1,4 @@
-# Data Schema Contracts
+﻿# Data Schema Contracts
 
 ## Purpose
 
@@ -66,8 +66,25 @@ Expected fields:
 | `brand` | Optional | Product brand where available. |
 | `bullet_point` | Optional | Product bullet text where available. |
 | `product_type` | Optional | Product type/category metadata. Missing values should be tracked. |
+| `color` | Optional | Product color metadata where available. |
+| `material` | Optional | Product material metadata where available. |
+| `style` | Optional | Product style metadata where available. |
 | `main_image_id` | Optional | Primary ABO image identifier where available. |
 | `other_image_id` | Optional | Additional ABO image identifier or identifiers where available. |
+| `combined_text` | Yes for written records | Cleaned text built only from observed ABO text fields. |
+| `combined_text_length` | Yes for written records | Character length of `combined_text`. |
+| `normalized_product_type` | Optional | Normalized product type for evaluation grouping. |
+| `normalized_brand` | Optional | Normalized brand value where available. |
+| `normalized_color` | Optional | Normalized color value where available. |
+| `image_path` | Yes for written CLIP-ready records | Resolved `images/small/{path}` member from corrected image metadata mapping. |
+| `has_usable_text` | Yes | Boolean readiness flag for usable `combined_text`. |
+| `has_usable_image` | Yes | Boolean readiness flag for validated mapped image path. |
+| `is_clip_ready` | Yes | Boolean requiring usable `item_id`, `combined_text`, and mapped image path. |
+| `is_evaluation_ready` | Yes | Boolean readiness flag for the current local proxy evaluation requirements. |
+| `metadata_field_count` | Yes | Count of optional metadata fields with usable values. |
+| `source_dataset` | Yes | ABO provenance label. |
+| `image_mapping_status` | Yes | Image mapping status such as `mapped`, `missing_main_image_id`, `image_id_not_found`, `invalid_mapped_path`, or `mapped_path_missing`. |
+| `cleaning_status` | Yes | Cleaning disposition for written records. |
 
 JSONL contract:
 

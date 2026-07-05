@@ -1,4 +1,4 @@
-"""Clean bounded Amazon Berkeley Objects listings into CLIP-ready records."""
+﻿"""Clean bounded Amazon Berkeley Objects listings into CLIP-ready records."""
 
 from __future__ import annotations
 
@@ -32,7 +32,18 @@ TEXT_FIELDS = (
     "material",
     "style",
 )
-REQUIRED_TEXT_FIELDS = ("item_id", "item_name", "brand", "product_type")
+OPTIONAL_METADATA_FIELDS = (
+    "item_name",
+    "brand",
+    "bullet_point",
+    "product_type",
+    "color",
+    "material",
+    "style",
+    "main_image_id",
+    "other_image_id",
+)
+SOURCE_DATASET = "amazon_berkeley_objects"
 
 
 @dataclass(frozen=True)
@@ -41,9 +52,16 @@ class ABOCleaningSummary:
 
     records_scanned: int = 0
     records_written: int = 0
+    dropped_missing_item_id: int = 0
+    dropped_unusable_text: int = 0
     dropped_missing_required_text: int = 0
     dropped_missing_image: int = 0
     duplicate_item_ids_dropped: int = 0
+    missing_product_type: int = 0
+    usable_text_count: int = 0
+    mapped_image_count: int = 0
+    clip_ready_count: int = 0
+    evaluation_ready_count: int = 0
 
     def to_dict(self) -> dict[str, int]:
         """Return a JSON-serializable summary."""
@@ -64,9 +82,15 @@ def flatten_multilingual_text(value: Any) -> str:
 
 
 def build_combined_text(fields: Mapping[str, Any]) -> str:
-    """Build deterministic product text from required and optional ABO fields."""
+    """Build deterministic product text from observed ABO fields."""
     values = [str(fields.get(field, "")).strip() for field in TEXT_FIELDS]
     return " ".join(value for value in values if value)
+
+
+def normalize_metadata_value(value: Any) -> str:
+    """Normalize optional metadata for evaluation grouping."""
+    text = str(value or "").strip().lower()
+    return " ".join(text.split())
 
 
 def clean_abo_products(
@@ -74,10 +98,11 @@ def clean_abo_products(
     images_tar_path: str | Path,
     max_records: int | None = None,
 ) -> tuple[list[dict[str, Any]], ABOCleaningSummary]:
-    """Return CLIP-ready ABO records and a cleaning summary.
+    """Return cleaned ABO records and a cleaning summary.
 
     Listing metadata and image metadata are read directly from their tar archives.
-    No archive members or image bytes are extracted to disk.
+    No archive members or image bytes are extracted to disk. Written records keep
+    the existing CLIP-ready boundary used by downstream similarity runners.
     """
     listings_path = _require_file(listings_tar_path, "ABO listings archive")
     images_path = _require_file(images_tar_path, "ABO images archive")
@@ -101,31 +126,65 @@ def clean_abo_products(
 
     cleaned_records: list[dict[str, Any]] = []
     seen_item_ids: set[str] = set()
+    dropped_missing_item_id = 0
+    dropped_unusable_text = 0
     dropped_missing_required_text = 0
     dropped_missing_image = 0
     duplicate_item_ids_dropped = 0
+    missing_product_type = 0
+    usable_text_count = 0
+    mapped_image_count = 0
+    clip_ready_count = 0
+    evaluation_ready_count = 0
 
     for raw_record in raw_records:
         flattened = {
             field: flatten_multilingual_text(raw_record.get(field))
-            for field in (*REQUIRED_TEXT_FIELDS, *TEXT_FIELDS[3:])
+            for field in ("item_id", *OPTIONAL_METADATA_FIELDS)
         }
-        if any(not flattened[field] for field in REQUIRED_TEXT_FIELDS):
+        item_id = flattened["item_id"]
+        if not item_id:
+            dropped_missing_item_id += 1
             dropped_missing_required_text += 1
             continue
 
         combined_text = build_combined_text(flattened)
-        main_image_id = flatten_multilingual_text(raw_record.get("main_image_id"))
-        image_path = resolve_image_path(image_id_to_path.get(main_image_id))
+        has_usable_text = bool(combined_text)
+        if not has_usable_text:
+            dropped_unusable_text += 1
+            dropped_missing_required_text += 1
+            continue
+        usable_text_count += 1
+
+        main_image_id = flattened["main_image_id"]
+        csv_path = image_id_to_path.get(main_image_id)
+        image_path = resolve_image_path(csv_path)
         has_usable_image = bool(image_path and image_path in existing_image_paths)
-        if not main_image_id or not has_usable_image:
+        image_mapping_status = _image_mapping_status(
+            main_image_id,
+            csv_path,
+            image_path,
+            has_usable_image,
+        )
+        if not has_usable_image:
             dropped_missing_image += 1
             continue
+        mapped_image_count += 1
 
-        item_id = flattened["item_id"]
         if item_id in seen_item_ids:
             duplicate_item_ids_dropped += 1
             continue
+
+        normalized_product_type = normalize_metadata_value(flattened["product_type"])
+        normalized_brand = normalize_metadata_value(flattened["brand"])
+        normalized_color = normalize_metadata_value(flattened["color"])
+        if not normalized_product_type:
+            missing_product_type += 1
+
+        is_clip_ready = has_usable_text and has_usable_image
+        is_evaluation_ready = bool(is_clip_ready and normalized_product_type)
+        clip_ready_count += int(is_clip_ready)
+        evaluation_ready_count += int(is_evaluation_ready)
 
         seen_item_ids.add(item_id)
         cleaned_records.append(
@@ -139,20 +198,37 @@ def clean_abo_products(
                 "material": flattened["material"],
                 "style": flattened["style"],
                 "combined_text": combined_text,
+                "combined_text_length": len(combined_text),
+                "normalized_product_type": normalized_product_type,
+                "normalized_brand": normalized_brand,
+                "normalized_color": normalized_color,
                 "main_image_id": main_image_id,
+                "other_image_id": flattened["other_image_id"],
                 "image_path": image_path,
-                "has_usable_text": bool(combined_text),
-                "has_usable_image": True,
-                "is_clip_ready": True,
+                "has_usable_text": has_usable_text,
+                "has_usable_image": has_usable_image,
+                "is_clip_ready": is_clip_ready,
+                "is_evaluation_ready": is_evaluation_ready,
+                "metadata_field_count": _metadata_field_count(flattened),
+                "source_dataset": SOURCE_DATASET,
+                "image_mapping_status": image_mapping_status,
+                "cleaning_status": "written",
             }
         )
 
     summary = ABOCleaningSummary(
         records_scanned=len(raw_records),
         records_written=len(cleaned_records),
+        dropped_missing_item_id=dropped_missing_item_id,
+        dropped_unusable_text=dropped_unusable_text,
         dropped_missing_required_text=dropped_missing_required_text,
         dropped_missing_image=dropped_missing_image,
         duplicate_item_ids_dropped=duplicate_item_ids_dropped,
+        missing_product_type=missing_product_type,
+        usable_text_count=usable_text_count,
+        mapped_image_count=mapped_image_count,
+        clip_ready_count=clip_ready_count,
+        evaluation_ready_count=evaluation_ready_count,
     )
     LOGGER.info("ABO cleaning summary: %s", summary.to_dict())
     return cleaned_records, summary
@@ -275,6 +351,27 @@ def _find_existing_tar_members(
                 if existing == candidate_paths:
                     break
     return existing
+
+
+def _image_mapping_status(
+    main_image_id: str,
+    csv_path: str | None,
+    resolved_image_path: str | None,
+    has_usable_image: bool,
+) -> str:
+    if not main_image_id:
+        return "missing_main_image_id"
+    if not csv_path:
+        return "image_id_not_found"
+    if not resolved_image_path:
+        return "invalid_mapped_path"
+    if not has_usable_image:
+        return "mapped_path_missing"
+    return "mapped"
+
+
+def _metadata_field_count(flattened: Mapping[str, str]) -> int:
+    return sum(1 for field in OPTIONAL_METADATA_FIELDS if flattened.get(field))
 
 
 def _is_listing_metadata_member(member_name: str) -> bool:
