@@ -8,7 +8,7 @@ This is local validation evidence, not production monitoring.
 
 ## Run Context
 
-- Generated at UTC: `2026-07-05T00:30:47Z`
+- Generated at UTC: `2026-07-05T02:18:23Z`
 - Processed directory: `data/processed`
 - Validator: `scripts/validate_processed_data.py`
 
